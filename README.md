@@ -1,4 +1,10 @@
 
+<p align="center">
+  <img src="images/logo.jpg" alt="Conductoras Logo" width="600">
+</p>
+
+# Conductoras
+
 Conductor at Scale (conductoras) is a framework to observe N git repos at once in a single computer.
 Start from ls -al ~/git/**/conductor/ to find the things under contuctor,
 then use conductor worktree skill to get the N tasks, and you're good!

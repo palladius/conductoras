@@ -1,0 +1,18 @@
+[
+  {
+    "hash": "03574a8f3f84073e086d7ab7226304e7ae7d7b4b",
+    "timestamp": "2026-06-28T17:51:13+02:00",
+    "author": "Riccardo Carlesso",
+    "message": " initial",
+    "branch": "main",
+    "added": 14,
+    "deleted": 0,
+    "files": [
+      {
+        "name": "README.md",
+        "added": 14,
+        "deleted": 0
+      }
+    ]
+  }
+]
