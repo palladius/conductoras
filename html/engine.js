@@ -28,6 +28,23 @@ let tagLines = []; // { y, text, life }
 let avatars = new Map(); // avatarUrl -> HTMLImageElement
 
 const mainShipImage = new Image();
+let processedShipCanvas = null;
+mainShipImage.onload = () => {
+    const tmp = document.createElement('canvas');
+    tmp.width = mainShipImage.width;
+    tmp.height = mainShipImage.height;
+    const tctx = tmp.getContext('2d');
+    tctx.drawImage(mainShipImage, 0, 0);
+    const idata = tctx.getImageData(0, 0, tmp.width, tmp.height);
+    for (let i = 0; i < idata.data.length; i += 4) {
+        // Remove black or very dark background pixels
+        if (idata.data[i] < 30 && idata.data[i+1] < 30 && idata.data[i+2] < 30) {
+            idata.data[i+3] = 0; 
+        }
+    }
+    tctx.putImageData(idata, 0, 0);
+    processedShipCanvas = tmp;
+};
 mainShipImage.src = 'main_spaceship.png';
 
 // Time UI & Dilation
@@ -334,15 +351,14 @@ function draw() {
     }
 
     // Draw Main Ship Sprite
-    if (mainShipImage.complete) {
+    if (processedShipCanvas) {
         ctx.save();
-        ctx.globalCompositeOperation = 'screen';
         ctx.shadowBlur = 30;
         ctx.shadowColor = '#0ff';
         // Sprite is large, draw it centered
         const sW = 120;
         const sH = 120;
-        ctx.drawImage(mainShipImage, mainX - sW/2, mainY - sH/2, sW, sH);
+        ctx.drawImage(processedShipCanvas, mainX - sW/2, mainY - sH/2, sW, sH);
         ctx.restore();
     }
 
