@@ -21,9 +21,11 @@ let totalCommits = 0;
 
 // Entities
 let stars = [];
-let ships = new Map(); // branchName -> { x, targetX, y, color, author, active }
+let ships = new Map(); // branchName -> { x, targetX, y, color, avatarUrl, active }
 let lasers = []; // { x, y, tx, ty, color, size, life }
 let explosions = []; // { x, y, size, life, color }
+let tagLines = []; // { y, text, life }
+let avatars = new Map(); // avatarUrl -> HTMLImageElement
 
 const COLORS = {
     main: '#f0f',
@@ -46,16 +48,47 @@ function initStars() {
     }
 }
 
-async function loadTimeline() {
+async function loadTimeline(repoName) {
+    if (!repoName) return;
+    
+    // Reset state
+    timeline = [];
+    currentIndex = 0;
+    score = 0;
+    totalCommits = 0;
+    ships.clear();
+    lasers = [];
+    explosions = [];
+    tagLines = [];
+    isPlaying = false;
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('scoreDisplay').innerText = '000000';
+    document.getElementById('commitsDisplay').innerText = '0';
+    document.getElementById('dateDisplay').innerText = 'Loading...';
+
     try {
-        const res = await fetch('timeline.json');
+        let res = await fetch(`/api/timeline?repo=${encodeURIComponent(repoName)}`);
+        
+        // Fallback to static deployment path if the API isn't running
+        if (!res.ok) {
+            res = await fetch(`${repoName}/timeline.json`);
+        }
+        
+        if (!res.ok) {
+            throw new Error("Timeline not found");
+        }
+
         timeline = await res.json();
-        if (timeline.length > 0) {
+        if (timeline && timeline.length > 0) {
             currentTime = new Date(timeline[0].timestamp).getTime();
             document.getElementById('dateDisplay').innerText = timeline[0].timestamp.split('T')[0];
+            isPlaying = true; // Auto-play when loaded
+        } else {
+            document.getElementById('dateDisplay').innerText = 'No commits found';
         }
     } catch(e) {
-        console.error("Failed to load timeline.json", e);
+        console.error("Failed to load timeline", e);
+        document.getElementById('dateDisplay').innerText = 'Error loading repo';
     }
 }
 
@@ -97,21 +130,15 @@ function spawnExplosion(x, y, color) {
 function update(dt) {
     if (!isPlaying || timeline.length === 0 || currentIndex >= timeline.length) return;
 
-    // Advance simulated time
-    // gameSpeed means how many seconds of real time pass per frame
-    // Let's say gameSpeed 10 = 10 hours per second? 
-    // We'll jump time based on delta.
     const timeStep = dt * gameSpeed * 100000; 
     currentTime += timeStep;
 
-    // Process events up to currentTime
     while (currentIndex < timeline.length) {
         const event = timeline[currentIndex];
         const eventTime = new Date(event.timestamp).getTime();
         
         if (eventTime > currentTime) break; // Not yet
 
-        // Process this commit
         totalCommits++;
         score += (event.added + event.deleted) * 10;
         
@@ -120,21 +147,36 @@ function update(dt) {
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
+        // Spawn Tag Line if commit has a tag
+        if (event.tag) {
+            tagLines.push({
+                y: 0, // spawn at the top
+                text: `🏁 On ${event.timestamp.split('T')[0]} we reached tag ${event.tag}`,
+                life: 1.0
+            });
+        }
+
         const isMain = event.branch === 'main' || event.branch === 'master';
         const mainX = width / 2;
-        const mainY = height * 0.8; // Target area is low-center
+        const mainY = height * 0.8;
 
         if (!isMain) {
-            // Manage ship
             if (!ships.has(event.branch)) {
-                // New branch spawned
                 const side = Math.random() > 0.5 ? 1 : -1;
+                
+                // Trigger Avatar Image Load
+                if (event.avatarUrl && !avatars.has(event.avatarUrl)) {
+                    const img = new Image();
+                    img.src = event.avatarUrl;
+                    avatars.set(event.avatarUrl, img);
+                }
+
                 ships.set(event.branch, {
                     x: mainX + side * (100 + Math.random() * 200),
                     targetX: mainX + side * (150 + Math.random() * 150),
                     y: height * 0.2 + Math.random() * (height * 0.4),
                     color: SHIP_COLORS[ships.size % SHIP_COLORS.length],
-                    author: event.author,
+                    avatarUrl: event.avatarUrl,
                     active: true
                 });
             }
@@ -142,18 +184,15 @@ function update(dt) {
             const ship = ships.get(event.branch);
             
             if (event.is_merge) {
-                // Merge into main (Mostro Finale)
                 ship.targetX = mainX;
                 ship.y += 100; // dive
                 spawnExplosion(mainX, mainY - 100, ship.color);
                 ship.active = false;
             } else {
-                // Shoot lasers
                 if (event.added > 0) spawnLaser(ship.x, ship.y, mainX, mainY, 'add', event.added);
                 if (event.deleted > 0) spawnLaser(ship.x, ship.y, mainX, mainY, 'del', event.deleted);
             }
         } else {
-            // Main branch commit, just explosion or visual pulse
             spawnExplosion(mainX, mainY, COLORS.main);
         }
 
@@ -172,9 +211,7 @@ function update(dt) {
     // Update ships
     ships.forEach((ship, branch) => {
         if (ship.active) {
-            // drift towards targetX
             ship.x += (ship.targetX - ship.x) * 0.05;
-            // bobbing effect
             ship.y += Math.sin(Date.now() / 500) * 0.5;
         }
     });
@@ -205,13 +242,19 @@ function update(dt) {
         e.life -= 0.05;
         if (e.life <= 0) explosions.splice(i, 1);
     }
+
+    // Update tags
+    for (let i = tagLines.length - 1; i >= 0; i--) {
+        let t = tagLines[i];
+        t.y += 2 * (gameSpeed / 10); // Scroll down matching speed
+        if (t.y > height + 50) tagLines.splice(i, 1);
+    }
 }
 
 function draw() {
     ctx.fillStyle = '#050510';
     ctx.fillRect(0, 0, width, height);
 
-    // Draw stars
     ctx.fillStyle = '#fff';
     stars.forEach(s => {
         ctx.globalAlpha = Math.random() * 0.5 + 0.5;
@@ -221,7 +264,6 @@ function draw() {
 
     const mainX = width / 2;
 
-    // Draw Main Column (The Mostro Finale / Hub)
     ctx.shadowBlur = 20;
     ctx.shadowColor = COLORS.main;
     ctx.fillStyle = 'rgba(255, 0, 255, 0.2)';
@@ -230,7 +272,6 @@ function draw() {
     ctx.fillRect(mainX - 5, 0, 10, height);
     ctx.shadowBlur = 0;
 
-    // Draw Lasers
     lasers.forEach(l => {
         ctx.shadowBlur = 10;
         ctx.shadowColor = l.color;
@@ -241,7 +282,6 @@ function draw() {
         ctx.fill();
     });
 
-    // Draw Ships
     ctx.globalAlpha = 1.0;
     ships.forEach((ship, branch) => {
         if (!ship.active) return;
@@ -249,7 +289,6 @@ function draw() {
         ctx.shadowBlur = 15;
         ctx.shadowColor = ship.color;
         
-        // Ship Triangle
         ctx.fillStyle = ship.color;
         ctx.beginPath();
         ctx.moveTo(ship.x, ship.y - 20);
@@ -257,22 +296,43 @@ function draw() {
         ctx.lineTo(ship.x - 15, ship.y + 15);
         ctx.fill();
 
-        // Badge
+        // Draw Gravatar Avatar
+        if (ship.avatarUrl) {
+            const img = avatars.get(ship.avatarUrl);
+            if (img && img.complete) {
+                ctx.save();
+                ctx.shadowBlur = 0;
+                // Draw a small circle avatar centered around the ship
+                ctx.beginPath();
+                ctx.arc(ship.x, ship.y + 25, 12, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(img, ship.x - 12, ship.y + 13, 24, 24);
+                ctx.restore();
+                
+                // Add a cool border around the avatar
+                ctx.beginPath();
+                ctx.arc(ship.x, ship.y + 25, 12, 0, Math.PI * 2);
+                ctx.strokeStyle = ship.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        // Badge (Just branch name with emoji)
         ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.strokeStyle = ship.color;
         ctx.lineWidth = 2;
-        const text = `[${ship.author}: ${branch}]`;
+        const text = `🌿 ${branch}`;
         ctx.font = '12px "Share Tech Mono"';
         const tw = ctx.measureText(text).width;
-        ctx.fillRect(ship.x - tw/2 - 5, ship.y - 45, tw + 10, 20);
-        ctx.strokeRect(ship.x - tw/2 - 5, ship.y - 45, tw + 10, 20);
+        ctx.fillRect(ship.x - tw/2 - 5, ship.y - 50, tw + 10, 20);
+        ctx.strokeRect(ship.x - tw/2 - 5, ship.y - 50, tw + 10, 20);
         
         ctx.fillStyle = '#fff';
-        ctx.fillText(text, ship.x - tw/2, ship.y - 31);
+        ctx.fillText(text, ship.x - tw/2, ship.y - 36);
     });
 
-    // Draw Explosions
     explosions.forEach(e => {
         ctx.shadowBlur = 10;
         ctx.shadowColor = e.color;
@@ -282,6 +342,21 @@ function draw() {
         ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
         ctx.fill();
     });
+
+    // Draw Tag Lines
+    tagLines.forEach(t => {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#0ff';
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+        ctx.fillRect(0, t.y, width, 2); // Horizontal glowing line
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#0ff';
+        ctx.font = 'bold 18px "Share Tech Mono"';
+        const tw = ctx.measureText(t.text).width;
+        ctx.fillText(t.text, width / 2 - tw / 2, t.y - 10);
+    });
+
     ctx.globalAlpha = 1.0;
     ctx.shadowBlur = 0;
 }
@@ -304,7 +379,72 @@ document.getElementById('speedSlider').oninput = (e) => {
     document.getElementById('speedDisplay').innerText = gameSpeed + 'x';
 };
 
+async function initRepos() {
+    let repos = [];
+    try {
+        let res = await fetch('/api/repos');
+        if (!res.ok) {
+            res = await fetch('repos.json'); // Static fallback
+        }
+        if (res.ok) {
+            repos = await res.json();
+        }
+    } catch (e) {
+        console.error("Failed to load repos list", e);
+    }
+
+    const select = document.getElementById('repoSelect');
+    if (!select) return;
+
+    if (repos.length > 0) {
+        select.innerHTML = '';
+        repos.forEach(repo => {
+            const option = document.createElement('option');
+            option.value = repo.name;
+            option.innerText = repo.name + (repo.has_conductor ? ' (Conductor)' : '');
+            select.appendChild(option);
+        });
+
+        // Check for URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRepo = urlParams.get('repo');
+        
+        if (urlRepo && repos.find(r => r.name === urlRepo)) {
+            select.value = urlRepo;
+            loadTimeline(urlRepo);
+        } else {
+            loadTimeline(repos[0].name);
+        }
+
+        select.addEventListener('change', (e) => {
+            // Update URL without reloading
+            const url = new URL(window.location);
+            url.searchParams.set('repo', e.target.value);
+            window.history.pushState({}, '', url);
+            loadTimeline(e.target.value);
+        });
+    } else {
+        // Ultimate fallback
+        select.innerHTML = '<option>Static Mode (No Server)</option>';
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRepo = urlParams.get('repo');
+        
+        if (urlRepo) {
+            loadTimeline(urlRepo);
+        } else {
+            fetch('timeline.json').then(r=>r.json()).then(data => {
+                timeline = data;
+                if(timeline && timeline.length > 0) {
+                    currentTime = new Date(timeline[0].timestamp).getTime();
+                    document.getElementById('dateDisplay').innerText = timeline[0].timestamp.split('T')[0];
+                }
+            }).catch(() => {
+                document.getElementById('dateDisplay').innerText = 'No data';
+            });
+        }
+    }
+}
+
 initStars();
-loadTimeline().then(() => {
-    requestAnimationFrame(loop);
-});
+initRepos();
+requestAnimationFrame(loop);

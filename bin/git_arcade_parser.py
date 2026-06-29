@@ -3,6 +3,7 @@ import os
 import subprocess
 import json
 import re
+import hashlib
 from datetime import datetime
 
 class GitHistoryParser:
@@ -14,8 +15,8 @@ class GitHistoryParser:
         Parses git log to generate a deterministic JSON timeline
         suitable for the HTML5 Canvas engine.
         """
-        # Format: %H (hash) | %aI (iso date) | %an (author) | %s (subject) | %D (refs/branches)
-        log_format = "%H|%aI|%an|%s|%D"
+        # Format: %H (hash) | %aI (iso date) | %an (author) | %aE (email) | %s (subject) | %D (refs/branches)
+        log_format = "%H|%aI|%an|%aE|%s|%D"
         cmd = ["git", "log", "--all", "--reverse", "--numstat", f"--format=commit|{log_format}"]
         
         try:
@@ -40,32 +41,45 @@ class GitHistoryParser:
                     timeline.append(current_commit)
                     
                 parts = line.split("|")
-                # Parts: ['commit', hash, date, author, subject, refs]
-                if len(parts) >= 5:
+                # Parts: ['commit', hash, date, author, email, subject, refs]
+                if len(parts) >= 6:
                     sha = parts[1]
                     date_iso = parts[2]
                     author = parts[3]
-                    subject = "|".join(parts[4:-1]) if len(parts) > 6 else parts[4]
-                    refs = parts[-1] if len(parts) >= 6 else ""
+                    email = parts[4]
+                    subject = "|".join(parts[5:-1]) if len(parts) > 7 else parts[5]
+                    refs = parts[-1] if len(parts) >= 7 else ""
                     
                     # Try to guess branch from refs
                     # A naive approach for branching visualization
                     branch = "main"
+                    tag = None
                     if refs:
-                        # Refs look like: HEAD -> cuj01, origin/cuj01, cuj01
-                        # We'll just grab the first non-HEAD ref as the "branch" for this commit's context
+                        # Refs look like: HEAD -> cuj01, tag: v1.0, origin/cuj01, cuj01
                         ref_list = [r.strip() for r in refs.split(",")]
                         for r in ref_list:
-                            if r and not r.startswith("HEAD"):
+                            if r.startswith("tag:"):
+                                tag = r.replace("tag:", "").strip()
+                            elif r and not r.startswith("HEAD") and not r.startswith("tag:"):
                                 branch = r.replace("origin/", "")
-                                break
                     
+                    # Ignore stash commits completely
+                    if branch == "refs/stash" or "refs/stash" in refs:
+                        continue
+                    
+                    # Generate Gravatar URL
+                    email_hash = hashlib.md5(email.strip().lower().encode('utf-8')).hexdigest()
+                    avatarUrl = f"https://www.gravatar.com/avatar/{email_hash}?s=32&d=identicon"
+
                     current_commit = {
                         "hash": sha,
                         "timestamp": date_iso,
                         "author": author,
+                        "email": email,
+                        "avatarUrl": avatarUrl,
                         "message": subject,
                         "branch": branch,
+                        "tag": tag,
                         "added": 0,
                         "deleted": 0,
                         "files": []

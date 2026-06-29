@@ -87,11 +87,14 @@
 
     <div class="hud hud-bottom flex flex-col gap-4">
         <div class="flex justify-between items-center">
-            <div id="dateDisplay" class="text-xl font-bold retro-text">1970-01-01</div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+                <select id="repoSelect" class="bg-gray-900 border 2px solid #0ff text-[#0ff] p-2 rounded" style="outline: none; box-shadow: 0 0 5px #0ff;">
+                    <option>Loading repos...</option>
+                </select>
                 <button id="btnPlay" class="btn">PLAY</button>
                 <button id="btnPause" class="btn">PAUSE</button>
             </div>
+            <div id="dateDisplay" class="text-xl font-bold retro-text">1970-01-01</div>
             <div class="flex items-center gap-2">
                 <span>SPEED:</span>
                 <input type="range" id="speedSlider" min="1" max="100" value="10" class="w-32">
