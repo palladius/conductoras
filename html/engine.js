@@ -27,6 +27,13 @@ let explosions = []; // { x, y, size, life, color }
 let tagLines = []; // { y, text, life }
 let avatars = new Map(); // avatarUrl -> HTMLImageElement
 
+// Time UI & Dilation
+let dynamicSpeedMultiplier = 1.0;
+let timeLines = []; // { type: 'day'|'month', y, text }
+let lastSimulatedDay = -1;
+let lastSimulatedMonth = -1;
+let activeBranches = 0;
+
 const COLORS = {
     main: '#f0f',
     green: '#0f0',
@@ -61,6 +68,11 @@ async function loadTimeline(repoName) {
     explosions = [];
     tagLines = [];
     isPlaying = false;
+    dynamicSpeedMultiplier = 1.0;
+    timeLines = [];
+    lastSimulatedDay = -1;
+    lastSimulatedMonth = -1;
+    activeBranches = 0;
     document.getElementById('progressBar').style.width = '0%';
     document.getElementById('scoreDisplay').innerText = '000000';
     document.getElementById('commitsDisplay').innerText = '0';
@@ -130,8 +142,49 @@ function spawnExplosion(x, y, color) {
 function update(dt) {
     if (!isPlaying || timeline.length === 0 || currentIndex >= timeline.length) return;
 
-    const timeStep = dt * gameSpeed * 100000; 
+    // Time Dilation calculation
+    let targetSpeed = 1.0;
+    if (currentIndex < timeline.length) {
+        const nextTime = new Date(timeline[currentIndex].timestamp).getTime();
+        const diffDays = (nextTime - currentTime) / (1000 * 60 * 60 * 24);
+        if (diffDays > 30) targetSpeed = 8.0; // Warp Speed
+        else if (diffDays > 7) targetSpeed = 4.0; // Cruise Speed
+        else if (diffDays < 1) targetSpeed = 0.5; // Bullet Time
+        else targetSpeed = 1.0;
+    }
+    
+    // Smooth lerp for speed transitions
+    dynamicSpeedMultiplier += (targetSpeed - dynamicSpeedMultiplier) * 0.05;
+
+    // Advance time
+    const timeStep = dt * (gameSpeed * dynamicSpeedMultiplier) * 100000; 
     currentTime += timeStep;
+    
+    // Time Grids Generation
+    const currentD = new Date(currentTime);
+    const cDay = currentD.getDate();
+    const cMonth = currentD.getMonth();
+    
+    if (lastSimulatedDay !== -1 && cDay !== lastSimulatedDay) {
+        if (cMonth !== lastSimulatedMonth) {
+            const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            timeLines.push({ type: 'month', y: 0, text: `${monthNames[cMonth]} ${currentD.getFullYear()}` });
+        } else {
+            timeLines.push({ type: 'day', y: 0, text: '' });
+        }
+    }
+    lastSimulatedDay = cDay;
+    lastSimulatedMonth = cMonth;
+    
+    // Update timeLines scrolling
+    for (let i = timeLines.length - 1; i >= 0; i--) {
+        let t = timeLines[i];
+        t.y += 3 * (gameSpeed * dynamicSpeedMultiplier / 10);
+        if (t.y > height) timeLines.splice(i, 1);
+    }
+
+    // Recalculate active branches
+    activeBranches = Array.from(ships.values()).filter(s => s.active).length;
 
     while (currentIndex < timeline.length) {
         const event = timeline[currentIndex];
@@ -140,7 +193,7 @@ function update(dt) {
         if (eventTime > currentTime) break; // Not yet
 
         totalCommits++;
-        score += (event.added + event.deleted) * 10;
+        score += (event.added + event.deleted) * 10 + (activeBranches * 100); // Massive score multiplier for complex branches!
         
         document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
         document.getElementById('commitsDisplay').innerText = totalCommits;
@@ -203,9 +256,9 @@ function update(dt) {
         currentIndex++;
     }
 
-    // Update stars
+    // Update stars (scaled by dynamic speed)
     stars.forEach(s => {
-        s.y += s.speed * (gameSpeed / 10);
+        s.y += s.speed * (gameSpeed * dynamicSpeedMultiplier / 10);
         if (s.y > height) {
             s.y = 0;
             s.x = Math.random() * width;
@@ -247,10 +300,10 @@ function update(dt) {
         if (e.life <= 0) explosions.splice(i, 1);
     }
 
-    // Update tags
+    // Update tags (scaled by dynamic speed)
     for (let i = tagLines.length - 1; i >= 0; i--) {
         let t = tagLines[i];
-        t.y += 2 * (gameSpeed / 10); // Scroll down matching speed
+        t.y += 2 * (gameSpeed * dynamicSpeedMultiplier / 10); // Scroll down matching speed
         if (t.y > height + 50) tagLines.splice(i, 1);
     }
 }
@@ -265,6 +318,20 @@ function draw() {
         ctx.fillRect(s.x, s.y, s.size, s.size);
     });
     ctx.globalAlpha = 1.0;
+    
+    // Draw Time Grid Lines
+    timeLines.forEach(t => {
+        if (t.type === 'month') {
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.15)'; // Cyan glow
+            ctx.fillRect(0, t.y, width, 4);
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+            ctx.font = '24px "Share Tech Mono"';
+            ctx.fillText(t.text, 30, t.y - 10);
+        } else {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.fillRect(0, t.y, width, 1);
+        }
+    });
 
     const mainX = width / 2;
 
@@ -406,6 +473,66 @@ function draw() {
 
     ctx.globalAlpha = 1.0;
     ctx.shadowBlur = 0;
+
+    // Draw Lunar Cycle UI (Bottom Right)
+    const moonRadius = 40;
+    const moonX = width - 80;
+    const moonY = height - 120; // Shifted up a bit
+    const lunarCycleMs = 29.53 * 24 * 60 * 60 * 1000;
+    const phase = (currentTime % lunarCycleMs) / lunarCycleMs; // 0 to 1
+
+    ctx.fillStyle = '#ccc';
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#111'; // Shadow color
+    ctx.beginPath();
+    if (phase < 0.5) {
+        // Waxing
+        ctx.arc(moonX, moonY, moonRadius, Math.PI/2, Math.PI*1.5, false);
+        ctx.fill();
+        ctx.fillStyle = phase < 0.25 ? '#111' : '#ccc';
+        ctx.beginPath();
+        ctx.ellipse(moonX, moonY, Math.abs(Math.cos(phase * Math.PI * 2)) * moonRadius, moonRadius, 0, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        // Waning
+        ctx.arc(moonX, moonY, moonRadius, -Math.PI/2, Math.PI/2, false);
+        ctx.fill();
+        ctx.fillStyle = phase < 0.75 ? '#ccc' : '#111';
+        ctx.beginPath();
+        ctx.ellipse(moonX, moonY, Math.abs(Math.cos(phase * Math.PI * 2)) * moonRadius, moonRadius, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Draw VHS Overlay (Top Right)
+    ctx.fillStyle = '#0ff';
+    ctx.font = '20px "Press Start 2P"';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#0ff';
+    
+    const dString = new Date(currentTime).toISOString().replace('T', ' ').substring(0, 19) + ' Z';
+    const dateWidth = ctx.measureText(dString).width;
+    ctx.fillText(dString, width - dateWidth - 30, 50);
+    
+    ctx.fillStyle = '#f0f';
+    ctx.shadowColor = '#f0f';
+    const activeText = `ACTIVE BRANCHES: ${activeBranches}`;
+    const activeWidth = ctx.measureText(activeText).width;
+    ctx.fillText(activeText, width - activeWidth - 30, 90);
+    
+    // Speed display
+    ctx.fillStyle = '#ff0';
+    ctx.shadowColor = '#ff0';
+    let speedText = "";
+    if (dynamicSpeedMultiplier > 2.0) speedText = ">>> WARP SPEED";
+    else if (dynamicSpeedMultiplier < 0.8) speedText = "> BULLET TIME";
+    else speedText = ">> CRUISE SPEED";
+    const speedWidth = ctx.measureText(speedText).width;
+    ctx.fillText(speedText, width - speedWidth - 30, 130);
+
+    ctx.shadowBlur = 0;
 }
 
 function loop(timestamp) {
@@ -421,6 +548,26 @@ function loop(timestamp) {
 // Controls
 document.getElementById('btnPlay').onclick = () => isPlaying = true;
 document.getElementById('btnPause').onclick = () => isPlaying = false;
+const btnReset = document.getElementById('btnReset');
+if (btnReset) {
+    btnReset.onclick = () => {
+        if (timeline && timeline.length > 0) {
+            currentIndex = 0;
+            currentTime = new Date(timeline[0].timestamp).getTime();
+            score = 0;
+            totalCommits = 0;
+            ships.clear();
+            lasers = [];
+            explosions = [];
+            tagLines = [];
+            timeLines = [];
+            lastSimulatedDay = -1;
+            lastSimulatedMonth = -1;
+            activeBranches = 0;
+            isPlaying = false;
+        }
+    };
+}
 document.getElementById('speedSlider').oninput = (e) => {
     gameSpeed = parseInt(e.target.value);
     document.getElementById('speedDisplay').innerText = gameSpeed + 'x';
