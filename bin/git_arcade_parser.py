@@ -71,6 +71,9 @@ class GitHistoryParser:
                     email_hash = hashlib.md5(email.strip().lower().encode('utf-8')).hexdigest()
                     avatarUrl = f"https://www.gravatar.com/avatar/{email_hash}?s=32&d=identicon"
 
+                    # Flag if this is a Conductor commit
+                    is_conductor = "conductor" in subject.lower()
+                    
                     current_commit = {
                         "hash": sha,
                         "timestamp": date_iso,
@@ -80,6 +83,7 @@ class GitHistoryParser:
                         "message": subject,
                         "branch": branch,
                         "tag": tag,
+                        "is_conductor": is_conductor,
                         "added": 0,
                         "deleted": 0,
                         "files": []

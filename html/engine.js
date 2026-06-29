@@ -177,8 +177,12 @@ function update(dt) {
                     y: height * 0.2 + Math.random() * (height * 0.4),
                     color: SHIP_COLORS[ships.size % SHIP_COLORS.length],
                     avatarUrl: event.avatarUrl,
+                    is_conductor: event.is_conductor || false,
                     active: true
                 });
+            } else if (event.is_conductor) {
+                // Upgrade to conductor ship
+                ships.get(event.branch).is_conductor = true;
             }
 
             const ship = ships.get(event.branch);
@@ -296,27 +300,49 @@ function draw() {
         ctx.shadowBlur = 15;
         ctx.shadowColor = ship.color;
         
-        // Elaborate spaceship (Gyruss style)
-        ctx.fillStyle = ship.color;
-        ctx.beginPath();
-        ctx.moveTo(0, -30); // nose
-        ctx.lineTo(20, 10);  // right wing tip
-        ctx.lineTo(8, 5);   // right inner wing
-        ctx.lineTo(15, 25);  // right engine
-        ctx.lineTo(0, 20);   // engine exhaust center
-        ctx.lineTo(-15, 25); // left engine
-        ctx.lineTo(-8, 5);  // left inner wing
-        ctx.lineTo(-20, 10); // left wing tip
-        ctx.closePath();
-        ctx.fill();
+        // Draw Graphic (Wand vs Ship)
+        if (ship.is_conductor) {
+            // Magic Wand
+            ctx.fillStyle = '#b58863'; // Wood handle
+            ctx.fillRect(-2, -20, 4, 30);
+            
+            // Glowing star tip
+            ctx.fillStyle = ship.color;
+            ctx.beginPath();
+            ctx.arc(0, -25, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(0, -35); ctx.lineTo(2, -27);
+            ctx.lineTo(10, -25); ctx.lineTo(2, -23);
+            ctx.lineTo(0, -15); ctx.lineTo(-2, -23);
+            ctx.lineTo(-10, -25); ctx.lineTo(-2, -27);
+            ctx.closePath();
+            ctx.fill();
+        } else {
+            // Elaborate spaceship (Gyruss style)
+            ctx.fillStyle = ship.color;
+            ctx.beginPath();
+            ctx.moveTo(0, -30); // nose
+            ctx.lineTo(20, 10);  // right wing tip
+            ctx.lineTo(8, 5);   // right inner wing
+            ctx.lineTo(15, 25);  // right engine
+            ctx.lineTo(0, 20);   // engine exhaust center
+            ctx.lineTo(-15, 25); // left engine
+            ctx.lineTo(-8, 5);  // left inner wing
+            ctx.lineTo(-20, 10); // left wing tip
+            ctx.closePath();
+            ctx.fill();
 
-        // Cockpit
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.beginPath();
-        ctx.moveTo(0, -10);
-        ctx.lineTo(5, 5);
-        ctx.lineTo(-5, 5);
-        ctx.fill();
+            // Cockpit
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.beginPath();
+            ctx.moveTo(0, -10);
+            ctx.lineTo(5, 5);
+            ctx.lineTo(-5, 5);
+            ctx.fill();
+        }
         ctx.restore();
 
         // Draw Gravatar Avatar (2x size)
@@ -339,12 +365,12 @@ function draw() {
             }
         }
 
-        // Badge (Just branch name with emoji)
+        // Badge (Conductor Wand emoji vs Branch Leaf emoji)
         ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.strokeStyle = ship.color;
         ctx.lineWidth = 2;
-        const text = `🌿 ${branch}`;
+        const text = ship.is_conductor ? `🪄 ${branch}` : `🌿 ${branch}`;
         ctx.font = '12px "Share Tech Mono"';
         const tw = ctx.measureText(text).width;
         ctx.fillRect(ship.x - tw/2 - 5, ship.y - 65, tw + 10, 20);
