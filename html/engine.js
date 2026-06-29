@@ -27,12 +27,13 @@ let explosions = []; // { x, y, size, life, color }
 let tagLines = []; // { y, text, life }
 let avatars = new Map(); // avatarUrl -> HTMLImageElement
 
+const mainShipImage = new Image();
+mainShipImage.src = 'main_spaceship.png';
+
 // Time UI & Dilation
 let dynamicSpeedMultiplier = 1.0;
-let timeLines = []; // { type: 'day'|'month', y, text }
-let lastSimulatedDay = -1;
-let lastSimulatedMonth = -1;
 let activeBranches = 0;
+let tractorBeams = []; // { x, y, tx, ty, color, life }
 
 const COLORS = {
     main: '#f0f',
@@ -69,10 +70,8 @@ async function loadTimeline(repoName) {
     tagLines = [];
     isPlaying = false;
     dynamicSpeedMultiplier = 1.0;
-    timeLines = [];
-    lastSimulatedDay = -1;
-    lastSimulatedMonth = -1;
     activeBranches = 0;
+    tractorBeams = [];
     document.getElementById('progressBar').style.width = '0%';
     document.getElementById('scoreDisplay').innerText = '000000';
     document.getElementById('commitsDisplay').innerText = '0';
@@ -160,29 +159,6 @@ function update(dt) {
     const timeStep = dt * (gameSpeed * dynamicSpeedMultiplier) * 100000; 
     currentTime += timeStep;
     
-    // Time Grids Generation
-    const currentD = new Date(currentTime);
-    const cDay = currentD.getDate();
-    const cMonth = currentD.getMonth();
-    
-    if (lastSimulatedDay !== -1 && cDay !== lastSimulatedDay) {
-        if (cMonth !== lastSimulatedMonth) {
-            const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-            timeLines.push({ type: 'month', y: 0, text: `${monthNames[cMonth]} ${currentD.getFullYear()}` });
-        } else {
-            timeLines.push({ type: 'day', y: 0, text: '' });
-        }
-    }
-    lastSimulatedDay = cDay;
-    lastSimulatedMonth = cMonth;
-    
-    // Update timeLines scrolling
-    for (let i = timeLines.length - 1; i >= 0; i--) {
-        let t = timeLines[i];
-        t.y += 3 * (gameSpeed * dynamicSpeedMultiplier / 10);
-        if (t.y > height) timeLines.splice(i, 1);
-    }
-
     // Recalculate active branches
     activeBranches = Array.from(ships.values()).filter(s => s.active).length;
 
@@ -200,14 +176,7 @@ function update(dt) {
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
-        // Spawn Tag Line if commit has a tag
-        if (event.tag) {
-            tagLines.push({
-                y: 0, // spawn at the top
-                text: `🏁 On ${event.timestamp.split('T')[0]} we reached tag ${event.tag}`,
-                life: 1.0
-            });
-        }
+        document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
         const isMain = event.branch === 'main' || event.branch === 'master';
         const mainX = width / 2;
@@ -243,14 +212,19 @@ function update(dt) {
             if (event.is_merge) {
                 ship.targetX = mainX;
                 ship.y += 100; // dive
-                spawnExplosion(mainX, mainY - 100, ship.color);
+                
+                const googleColors = ['#4285F4', '#EA4335', '#FBBC05', '#34A853'];
+                tractorBeams.push({
+                    x: ship.x, y: ship.y,
+                    tx: mainX, ty: mainY - 30, // shoot from top of mothership
+                    color: googleColors[Math.floor(Math.random() * googleColors.length)],
+                    life: 1.0
+                });
                 ship.active = false;
             } else {
-                if (event.added > 0) spawnLaser(ship.x, ship.y, mainX, mainY, 'add', event.added);
-                if (event.deleted > 0) spawnLaser(ship.x, ship.y, mainX, mainY, 'del', event.deleted);
+                if (event.added > 0) spawnLaser(ship.x, ship.y, mainX, mainY - 30, 'add', event.added);
+                if (event.deleted > 0) spawnLaser(ship.x, ship.y, mainX, mainY - 30, 'del', event.deleted);
             }
-        } else {
-            spawnExplosion(mainX, mainY, COLORS.main);
         }
 
         currentIndex++;
@@ -300,11 +274,11 @@ function update(dt) {
         if (e.life <= 0) explosions.splice(i, 1);
     }
 
-    // Update tags (scaled by dynamic speed)
-    for (let i = tagLines.length - 1; i >= 0; i--) {
-        let t = tagLines[i];
-        t.y += 2 * (gameSpeed * dynamicSpeedMultiplier / 10); // Scroll down matching speed
-        if (t.y > height + 50) tagLines.splice(i, 1);
+    // Update Tractor Beams
+    for (let i = tractorBeams.length - 1; i >= 0; i--) {
+        let b = tractorBeams[i];
+        b.life -= 0.015 * (gameSpeed * dynamicSpeedMultiplier / 10);
+        if (b.life <= 0) tractorBeams.splice(i, 1);
     }
 }
 
@@ -319,29 +293,58 @@ function draw() {
     });
     ctx.globalAlpha = 1.0;
     
-    // Draw Time Grid Lines
-    timeLines.forEach(t => {
-        if (t.type === 'month') {
-            ctx.fillStyle = 'rgba(0, 255, 255, 0.15)'; // Cyan glow
-            ctx.fillRect(0, t.y, width, 4);
-            ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
-            ctx.font = '24px "Share Tech Mono"';
-            ctx.fillText(t.text, 30, t.y - 10);
-        } else {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.fillRect(0, t.y, width, 1);
-        }
-    });
-
     const mainX = width / 2;
+    const mainY = height * 0.8;
+    
+    // Draw Time Grid Lines (Mathematically Absolute)
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const pixelsPerDay = 5; 
+    
+    const msToTop = (mainY / pixelsPerDay) * msPerDay;
+    const msToBottom = ((height - mainY) / pixelsPerDay) * msPerDay;
+    const startTime = currentTime - msToBottom;
+    const endTime = currentTime + msToTop;
+    
+    const startD = new Date(startTime);
+    
+    // Draw Months
+    let dMonth = new Date(startD.getFullYear(), startD.getMonth(), 1);
+    while (dMonth.getTime() < endTime) {
+        const diffMs = dMonth.getTime() - currentTime;
+        const y = mainY - (diffMs / msPerDay) * pixelsPerDay;
+        
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.15)'; 
+        ctx.fillRect(0, y, width, 4);
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+        ctx.font = '24px "Share Tech Mono"';
+        const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        ctx.fillText(`${monthNames[dMonth.getMonth()]} ${dMonth.getFullYear()}`, 30, y - 10);
+        
+        dMonth.setMonth(dMonth.getMonth() + 1);
+    }
+    
+    // Draw Days
+    let dDay = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate());
+    while (dDay.getTime() < endTime) {
+        const diffMs = dDay.getTime() - currentTime;
+        const y = mainY - (diffMs / msPerDay) * pixelsPerDay;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.fillRect(0, y, width, 1);
+        dDay.setDate(dDay.getDate() + 1);
+    }
 
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = COLORS.main;
-    ctx.fillStyle = 'rgba(255, 0, 255, 0.2)';
-    ctx.fillRect(mainX - 30, 0, 60, height);
-    ctx.fillStyle = COLORS.main;
-    ctx.fillRect(mainX - 5, 0, 10, height);
-    ctx.shadowBlur = 0;
+    // Draw Main Ship Sprite
+    if (mainShipImage.complete) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = '#0ff';
+        // Sprite is large, draw it centered
+        const sW = 120;
+        const sH = 120;
+        ctx.drawImage(mainShipImage, mainX - sW/2, mainY - sH/2, sW, sH);
+        ctx.restore();
+    }
 
     lasers.forEach(l => {
         ctx.shadowBlur = 10;
@@ -457,18 +460,45 @@ function draw() {
         ctx.fill();
     });
 
-    // Draw Tag Lines
-    tagLines.forEach(t => {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#0ff';
-        ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
-        ctx.fillRect(0, t.y, width, 2); // Horizontal glowing line
+    // Draw Tractor Beams
+    ctx.globalCompositeOperation = 'screen';
+    tractorBeams.forEach(b => {
+        ctx.beginPath();
+        ctx.moveTo(b.tx, b.ty);
+        // Google colored bezier curve pull
+        ctx.quadraticCurveTo(b.tx + (Math.random()-0.5)*100, (b.y + b.ty)/2, b.x, b.y);
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 2 + (b.life * 8);
+        ctx.globalAlpha = b.life;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = b.color;
+        ctx.stroke();
+    });
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1.0;
+    ctx.shadowBlur = 0;
 
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#0ff';
-        ctx.font = 'bold 18px "Share Tech Mono"';
-        const tw = ctx.measureText(t.text).width;
-        ctx.fillText(t.text, width / 2 - tw / 2, t.y - 10);
+    // Draw Tag Lines (Mathematically Absolute)
+    timeline.forEach(event => {
+        if (event.tag) {
+            const eventTime = new Date(event.timestamp).getTime();
+            const diffMs = eventTime - currentTime;
+            const y = mainY - (diffMs / msPerDay) * pixelsPerDay;
+            
+            if (y > -50 && y < height + 50) {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#0ff';
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+                ctx.fillRect(0, y, width, 2); 
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#0ff';
+                ctx.font = 'bold 18px "Share Tech Mono"';
+                const text = `🏁 On ${event.timestamp.split('T')[0]} we reached tag ${event.tag}`;
+                const tw = ctx.measureText(text).width;
+                ctx.fillText(text, width / 2 - tw / 2, y - 10);
+            }
+        }
     });
 
     ctx.globalAlpha = 1.0;
@@ -559,10 +589,7 @@ if (btnReset) {
             ships.clear();
             lasers = [];
             explosions = [];
-            tagLines = [];
-            timeLines = [];
-            lastSimulatedDay = -1;
-            lastSimulatedMonth = -1;
+            tractorBeams = [];
             activeBranches = 0;
             isPlaying = false;
         }
