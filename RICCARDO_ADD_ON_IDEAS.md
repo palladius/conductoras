@@ -2,12 +2,14 @@
 
 Controls are like in a video:
 
-1. Select repo, must be a repo with conductor/
-2. PLAY: starts animation from where we are.
-2. PAUSE: Stops animation in the time we are now
-2. RESET: resets timeline to 0. Ready for another play.
+1. Select repo dropdown, must be a repo XXX with ~/git/$REPO_NAME/conductor/tracks/ folder existing. Since this takes some time, you can cache this value. Ote that every repo will have a different history, so the JSOn is parametrix in reponame (or a deterministic hash of it). DEfault to `../media-arneis/` which has quite some tracks.
+1. PLAY: starts animation from where we are.
+1. PAUSE: Stops animation in the time we are now
+1. RESET: resets timeline to 0. Ready for another play.
+1. The Timeline bar: this is clickable with mouse and should set roughyl yhe timeline from the first commit 
+1. Date should be visualized like in a 1980s-style youtube, with counter on top right or left, out of sight, but always incrementing. Also #branches at a given time should be visible. More branches active at a given time should give us more visual complexity and more SCORE :)
 
-Date should be visualized like in a 1980s youtube, with counter on top right or left, out of sight, but always incrementing. Also #branches at a given time should be visible. More branches active at a given time should give us more visual complexity and more SCORE :)
+PS. Ensure all visualized things don't overlap ;) Take screenshot every now and then to guarantee this.
 
 ## branches
 
@@ -22,6 +24,8 @@ Date should be visualized like in a 1980s youtube, with counter on top right or 
 
 We need some way to signify the passing on time, maybe days or months have parallax implication, maybe a moon rotating on the bottom left/right and it becomes FULL every 1mo? Also time should be dilating if many branches in a day -> go slower, if nothing happens for a month -> go faster. This speed flexibility should be signified by external things, like sun, moon, or horizontal lines with vertical parallax (eg one semi transparent daily line, a visible weekly line, and a monthly thicker line with "Apr 2026" coming down). Do some experimentation
 
-## Main astronave (bottom center of the game)
+## Main starship/astronave (bottom center of the game)
 
 Main should be a nice "sprite", maybe generated with NanoBanana with some sort of transparency so its not a stupid SQUARE/RECTANGLE. It should be some sort of "git astronave" with "main" pizellated, but otherwise rounded and super cool. This astronave sends super cool special effects using the best that JS has to offer, in google-themed colors. Similar to Star Trek teleporting with the idea of a "attracting ray beam" (un raggio trattore); this is the metaphor we want to convey.
+
+The vertical position of "main" starship is the position of `current_time()`. So for instance, if we're passing Jul 2026, when the line cros the center of the starship, THEN the git repo has passed misnight of 1 jul 2026.
