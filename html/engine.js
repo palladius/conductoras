@@ -284,36 +284,57 @@ function draw() {
 
     ctx.globalAlpha = 1.0;
     ships.forEach((ship, branch) => {
-        if (!ship.active) return;
+        // Calculate angle pointing towards main (target where they shoot lasers)
+        const dx = mainX - ship.x;
+        const dy = (height * 0.8) - ship.y;
+        const angle = Math.atan2(dy, dx) + Math.PI / 2;
         
+        ctx.save();
+        ctx.translate(ship.x, ship.y);
+        ctx.rotate(angle);
+
         ctx.shadowBlur = 15;
         ctx.shadowColor = ship.color;
         
+        // Elaborate spaceship (Gyruss style)
         ctx.fillStyle = ship.color;
         ctx.beginPath();
-        ctx.moveTo(ship.x, ship.y - 20);
-        ctx.lineTo(ship.x + 15, ship.y + 15);
-        ctx.lineTo(ship.x - 15, ship.y + 15);
+        ctx.moveTo(0, -30); // nose
+        ctx.lineTo(20, 10);  // right wing tip
+        ctx.lineTo(8, 5);   // right inner wing
+        ctx.lineTo(15, 25);  // right engine
+        ctx.lineTo(0, 20);   // engine exhaust center
+        ctx.lineTo(-15, 25); // left engine
+        ctx.lineTo(-8, 5);  // left inner wing
+        ctx.lineTo(-20, 10); // left wing tip
+        ctx.closePath();
         ctx.fill();
 
-        // Draw Gravatar Avatar
+        // Cockpit
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(5, 5);
+        ctx.lineTo(-5, 5);
+        ctx.fill();
+        ctx.restore();
+
+        // Draw Gravatar Avatar (2x size)
         if (ship.avatarUrl) {
             const img = avatars.get(ship.avatarUrl);
             if (img && img.complete) {
                 ctx.save();
                 ctx.shadowBlur = 0;
-                // Draw a small circle avatar centered around the ship
                 ctx.beginPath();
-                ctx.arc(ship.x, ship.y + 25, 12, 0, Math.PI * 2);
+                ctx.arc(ship.x, ship.y + 45, 24, 0, Math.PI * 2);
                 ctx.clip();
-                ctx.drawImage(img, ship.x - 12, ship.y + 13, 24, 24);
+                ctx.drawImage(img, ship.x - 24, ship.y + 21, 48, 48);
                 ctx.restore();
                 
-                // Add a cool border around the avatar
                 ctx.beginPath();
-                ctx.arc(ship.x, ship.y + 25, 12, 0, Math.PI * 2);
+                ctx.arc(ship.x, ship.y + 45, 24, 0, Math.PI * 2);
                 ctx.strokeStyle = ship.color;
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 3;
                 ctx.stroke();
             }
         }
@@ -326,11 +347,11 @@ function draw() {
         const text = `🌿 ${branch}`;
         ctx.font = '12px "Share Tech Mono"';
         const tw = ctx.measureText(text).width;
-        ctx.fillRect(ship.x - tw/2 - 5, ship.y - 50, tw + 10, 20);
-        ctx.strokeRect(ship.x - tw/2 - 5, ship.y - 50, tw + 10, 20);
+        ctx.fillRect(ship.x - tw/2 - 5, ship.y - 65, tw + 10, 20);
+        ctx.strokeRect(ship.x - tw/2 - 5, ship.y - 65, tw + 10, 20);
         
         ctx.fillStyle = '#fff';
-        ctx.fillText(text, ship.x - tw/2, ship.y - 36);
+        ctx.fillText(text, ship.x - tw/2, ship.y - 51);
     });
 
     explosions.forEach(e => {
