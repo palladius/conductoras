@@ -5,6 +5,8 @@
     "author": "Riccardo Carlesso",
     "message": " initial",
     "branch": "main",
+    "tags": [],
+    "is_conductor": false,
     "added": 14,
     "deleted": 0,
     "files": [
@@ -12,6 +14,226 @@
         "name": "README.md",
         "added": 14,
         "deleted": 0
+      }
+    ]
+  },
+  {
+    "hash": "9cc4bd2a4afbde9a1e22b992b89779d8e5156d4b",
+    "timestamp": "2026-06-28T20:31:47+02:00",
+    "author": "Riccardo Carlesso",
+    "message": "\u2728 Add Git History Arcade: parser, canvas engine, and tests",
+    "branch": "main",
+    "tags": [],
+    "is_conductor": false,
+    "added": 641,
+    "deleted": 0,
+    "files": [
+      {
+        "name": ".gitignore",
+        "added": 2,
+        "deleted": 0
+      },
+      {
+        "name": "GEMINI.md",
+        "added": 3,
+        "deleted": 0
+      },
+      {
+        "name": "README.md",
+        "added": 6,
+        "deleted": 0
+      },
+      {
+        "name": "bin/git_arcade_parser.py",
+        "added": 120,
+        "deleted": 0
+      },
+      {
+        "name": "html/engine.js",
+        "added": 310,
+        "deleted": 0
+      },
+      {
+        "name": "html/index.html",
+        "added": 108,
+        "deleted": 0
+      },
+      {
+        "name": "html/timeline.json",
+        "added": 18,
+        "deleted": 0
+      },
+      {
+        "name": "tests/test_git_arcade_parser.py",
+        "added": 74,
+        "deleted": 0
+      }
+    ]
+  },
+  {
+    "hash": "2ba5304ee650b8b8e06ceaba13ab9c7d13327798",
+    "timestamp": "2026-06-28T20:33:36+02:00",
+    "author": "Riccardo Carlesso",
+    "message": "Add VERSION and CHANGELOG.md",
+    "branch": "main",
+    "tags": [
+      "v1.0.1"
+    ],
+    "is_conductor": false,
+    "added": 11,
+    "deleted": 0,
+    "files": [
+      {
+        "name": "CHANGELOG.md",
+        "added": 10,
+        "deleted": 0
+      },
+      {
+        "name": "VERSION",
+        "added": 1,
+        "deleted": 0
+      }
+    ]
+  },
+  {
+    "hash": "374eb5206b43c4e712180c67d152c609f7d79ad3",
+    "timestamp": "2026-06-29T21:03:48+02:00",
+    "author": "Riccardo Carlesso",
+    "message": "\u2728 feat: add repo chooser, gravatar, tags, and static build support",
+    "branch": "main",
+    "tags": [],
+    "is_conductor": true,
+    "added": 25974,
+    "deleted": 65,
+    "files": [
+      {
+        "name": ".worktrees/feature-git-history-arcade",
+        "added": 1,
+        "deleted": 0
+      },
+      {
+        "name": "CHANGELOG.md",
+        "added": 7,
+        "deleted": 0
+      },
+      {
+        "name": "RICCARDO_ADD_ON_IDEAS.md",
+        "added": 7,
+        "deleted": 0
+      },
+      {
+        "name": "VERSION",
+        "added": 1,
+        "deleted": 1
+      },
+      {
+        "name": "bin/build_static.py",
+        "added": 70,
+        "deleted": 0
+      },
+      {
+        "name": "bin/git_arcade_parser.py",
+        "added": 24,
+        "deleted": 10
+      },
+      {
+        "name": "html/engine.js",
+        "added": 174,
+        "deleted": 34
+      },
+      {
+        "name": "html/index.html",
+        "added": 5,
+        "deleted": 2
+      },
+      {
+        "name": "html/media-arneis/timeline.json",
+        "added": 25676,
+        "deleted": 0
+      },
+      {
+        "name": "html/repos.json",
+        "added": 6,
+        "deleted": 0
+      },
+      {
+        "name": "html/timeline.json",
+        "added": 0,
+        "deleted": 18
+      },
+      {
+        "name": "justfile",
+        "added": 3,
+        "deleted": 0
+      }
+    ]
+  },
+  {
+    "hash": "7d89e7080be4fb678d7cd0743183a22e5eec1f2c",
+    "timestamp": "2026-06-29T21:04:23+02:00",
+    "author": "Riccardo Carlesso",
+    "message": "fix: restore missing arcade_server.py API backend",
+    "branch": "main",
+    "tags": [],
+    "is_conductor": false,
+    "added": 63,
+    "deleted": 0,
+    "files": [
+      {
+        "name": "bin/arcade_server.py",
+        "added": 63,
+        "deleted": 0
+      }
+    ]
+  },
+  {
+    "hash": "64e6a525579f35e134e8626b61de7f027b68e712",
+    "timestamp": "2026-06-29T21:06:03+02:00",
+    "author": "Riccardo Carlesso",
+    "message": "\u2728 feat: redesign ship graphics with rotation and double gravatar size",
+    "branch": "main",
+    "tags": [],
+    "is_conductor": false,
+    "added": 35,
+    "deleted": 14,
+    "files": [
+      {
+        "name": "html/engine.js",
+        "added": 35,
+        "deleted": 14
+      }
+    ]
+  },
+  {
+    "hash": "2732fc8c027712235fb1fd023d6d888618f6493d",
+    "timestamp": "2026-06-29T21:08:26+02:00",
+    "author": "Riccardo Carlesso",
+    "message": "\u2728 feat: add magic wand graphics for Conductor branches",
+    "branch": "main",
+    "tags": [],
+    "is_conductor": false,
+    "added": 59,
+    "deleted": 26,
+    "files": [
+      {
+        "name": ".gitignore",
+        "added": 1,
+        "deleted": 0
+      },
+      {
+        "name": "RICCARDO_ADD_ON_IDEAS.md",
+        "added": 5,
+        "deleted": 3
+      },
+      {
+        "name": "bin/git_arcade_parser.py",
+        "added": 4,
+        "deleted": 0
+      },
+      {
+        "name": "html/engine.js",
+        "added": 49,
+        "deleted": 23
       }
     ]
   }

@@ -16,7 +16,7 @@ class GitHistoryParser:
         """
         # Format: %H (hash) | %aI (iso date) | %an (author) | %s (subject) | %D (refs/branches)
         log_format = "%H|%aI|%an|%s|%D"
-        cmd = ["git", "log", "--all", "--reverse", "--numstat", f"--format=commit|{log_format}"]
+        cmd = ["git", "log", "--exclude=refs/stash", "--all", "--reverse", "--numstat", f"--format=commit|{log_format}"]
         
         try:
             result = subprocess.run(cmd, cwd=self.repo_path, check=True, capture_output=True, text=True)
@@ -48,17 +48,16 @@ class GitHistoryParser:
                     subject = "|".join(parts[4:-1]) if len(parts) > 6 else parts[4]
                     refs = parts[-1] if len(parts) >= 6 else ""
                     
-                    # Try to guess branch from refs
-                    # A naive approach for branching visualization
+                    # Try to guess branch and tags from refs
                     branch = "main"
+                    tags = []
                     if refs:
-                        # Refs look like: HEAD -> cuj01, origin/cuj01, cuj01
-                        # We'll just grab the first non-HEAD ref as the "branch" for this commit's context
                         ref_list = [r.strip() for r in refs.split(",")]
                         for r in ref_list:
-                            if r and not r.startswith("HEAD"):
+                            if r.startswith("tag: "):
+                                tags.append(r.replace("tag: ", ""))
+                            elif r and not r.startswith("HEAD") and branch == "main":
                                 branch = r.replace("origin/", "")
-                                break
                     
                     current_commit = {
                         "hash": sha,
@@ -66,6 +65,8 @@ class GitHistoryParser:
                         "author": author,
                         "message": subject,
                         "branch": branch,
+                        "tags": tags,
+                        "is_conductor": ("conductor" in branch.lower() or "issue" in branch.lower()),
                         "added": 0,
                         "deleted": 0,
                         "files": []
@@ -86,6 +87,9 @@ class GitHistoryParser:
                     added = int(added_str) if added_str != '-' else 0
                     deleted = int(deleted_str) if deleted_str != '-' else 0
                     
+                    if file_name.startswith("conductor/") or ".worktrees/" in file_name:
+                        current_commit["is_conductor"] = True
+                        
                     current_commit["added"] += added
                     current_commit["deleted"] += deleted
                     current_commit["files"].append({
