@@ -13,11 +13,13 @@ resize();
 let isPlaying = false;
 let gameSpeed = 10;
 let timeline = [];
+let currentRepoName = '';
 let currentIndex = 0;
 let currentTime = 0; // Simulated timestamp
 let lastFrameTime = 0;
 let score = 0;
 let totalCommits = 0;
+let activePlayers = new Set();
 
 // Entities
 let stars = [];
@@ -60,7 +62,19 @@ const COLORS = {
     yellow: '#ff0',
     orange: '#f80'
 };
-const SHIP_COLORS = [COLORS.cyan, COLORS.yellow, COLORS.orange, '#0f8', '#80f'];
+const SHIP_COLORS = [
+    COLORS.cyan, 
+    COLORS.yellow, 
+    COLORS.orange, 
+    '#0f8', // Neon Green
+    '#80f', // Neon Purple
+    '#ff007f', // Rose/Pink
+    '#00ff7f', // Spring Green
+    '#7fff00', // Chartreuse
+    '#ff00ff', // Magenta
+    '#0080ff', // Azure Blue
+    '#ff5555'  // Bright Coral
+];
 
 function initStars() {
     for(let i=0; i<100; i++) {
@@ -73,14 +87,105 @@ function initStars() {
     }
 }
 
+function preScanTimeline(timelineData) {
+    const playersMap = new Map(); // email -> { name, email, avatarUrl, color, is_conductor, branches: Set }
+    
+    timelineData.forEach(event => {
+        if (event.email) {
+            if (!playersMap.has(event.email)) {
+                const color = SHIP_COLORS[playersMap.size % SHIP_COLORS.length];
+                playersMap.set(event.email, {
+                    name: event.author || 'Unknown',
+                    email: event.email,
+                    avatarUrl: event.avatarUrl,
+                    color: color,
+                    is_conductor: false,
+                    branches: new Set()
+                });
+            }
+            const player = playersMap.get(event.email);
+            player.branches.add(event.branch);
+            if (event.is_conductor) {
+                player.is_conductor = true;
+            }
+        }
+    });
+
+    return {
+        players: Array.from(playersMap.values())
+    };
+}
+
+function showBriefing(players, repoName, totalCommitsCount) {
+    const overlay = document.getElementById('briefingOverlay');
+    if (!overlay) return;
+
+    document.getElementById('briefingRepoName').innerText = `REPO: ${repoName}`;
+    document.getElementById('briefingCommits').innerText = totalCommitsCount.toLocaleString();
+    document.getElementById('briefingPlayers').innerText = players.length;
+
+    const fleetList = document.getElementById('briefingFleetList');
+    fleetList.innerHTML = '';
+
+    players.forEach(player => {
+        const badge = player.is_conductor ? '🪄' : '🌿';
+        
+        let shipSvg = '';
+        if (player.is_conductor) {
+            shipSvg = `
+                <svg class="w-8 h-8 filter drop-shadow-[0_0_5px_currentColor]" viewBox="-15 -40 30 55" style="color: ${player.color}">
+                    <rect x="-2" y="-20" width="4" height="30" fill="#b58863" rx="1"/>
+                    <circle cx="0" cy="-25" r="6" fill="currentColor"/>
+                    <polygon points="0,-35 2,-27 10,-25 2,-23 0,-15 -2,-23 -10,-25 -2,-27" fill="#fff"/>
+                </svg>
+            `;
+        } else {
+            shipSvg = `
+                <svg class="w-8 h-8 filter drop-shadow-[0_0_5px_currentColor]" viewBox="-25 -35 50 65" style="color: ${player.color}">
+                    <polygon points="0,-30 20,10 8,5 15,25 0,20 -15,25 -8,5 -20,10" fill="currentColor"/>
+                    <polygon points="0,-10 5,5 -5,5" fill="rgba(255,255,255,0.8)"/>
+                </svg>
+            `;
+        }
+
+        const primaryBranchName = Array.from(player.branches)[0] || 'main';
+
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between bg-gray-900/60 border border-gray-800 p-3 rounded-lg hover:border-[#0ff]/40 transition-all duration-200";
+        row.innerHTML = `
+            <div class="flex items-center gap-3 text-left">
+                <img class="w-9 h-9 rounded-full border-2 border-gray-700 shadow-md" src="${player.avatarUrl}" alt="${player.name}" onerror="this.src='https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp'">
+                <div class="flex flex-col">
+                    <span class="text-white text-sm font-bold tracking-wide">${player.name}</span>
+                    <span class="text-gray-400 text-xs font-mono select-all">${player.email}</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">PRIMARY BRANCH</div>
+                    <div class="text-xs font-bold font-mono" style="color: ${player.color}">${badge} ${primaryBranchName}</div>
+                </div>
+                <div class="flex items-center justify-center bg-black/40 p-1.5 rounded border border-gray-800">
+                    ${shipSvg}
+                </div>
+            </div>
+        `;
+        fleetList.appendChild(row);
+    });
+
+    overlay.classList.remove('hidden');
+}
+
 async function loadTimeline(repoName) {
     if (!repoName) return;
+    currentRepoName = repoName;
     
     // Reset state
     timeline = [];
     currentIndex = 0;
     score = 0;
     totalCommits = 0;
+    activePlayers.clear();
     ships.clear();
     lasers = [];
     explosions = [];
@@ -92,10 +197,11 @@ async function loadTimeline(repoName) {
     document.getElementById('progressBar').style.width = '0%';
     document.getElementById('scoreDisplay').innerText = '000000';
     document.getElementById('commitsDisplay').innerText = '0';
+    document.getElementById('playersDisplay').innerText = '0';
     document.getElementById('dateDisplay').innerText = 'Loading...';
 
     try {
-        let res = await fetch(`/api/timeline?repo=${encodeURIComponent(repoName)}`);
+        let res = await fetch(`/api/timeline?repo=${encodeURIComponent(repoName)}&t=${Date.now()}`);
         
         // Fallback to static deployment path if the API isn't running
         if (!res.ok) {
@@ -105,12 +211,16 @@ async function loadTimeline(repoName) {
         if (!res.ok) {
             throw new Error("Timeline not found");
         }
-
+ 
         timeline = await res.json();
         if (timeline && timeline.length > 0) {
             currentTime = new Date(timeline[0].timestamp).getTime();
             document.getElementById('dateDisplay').innerText = timeline[0].timestamp.split('T')[0];
-            isPlaying = true; // Auto-play when loaded
+            isPlaying = false; // Do NOT auto-play
+            
+            // Pre-scan to build player and ship data
+            const briefingData = preScanTimeline(timeline);
+            showBriefing(briefingData.players, briefingData.branches, repoName, timeline.length);
         } else {
             document.getElementById('dateDisplay').innerText = 'No commits found';
         }
@@ -187,12 +297,14 @@ function update(dt) {
 
         totalCommits++;
         score += (event.added + event.deleted) * 10 + (activeBranches * 100); // Massive score multiplier for complex branches!
+        if (event.email) {
+            activePlayers.add(event.email);
+        }
         
         document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
         document.getElementById('commitsDisplay').innerText = totalCommits;
+        document.getElementById('playersDisplay').innerText = activePlayers.size;
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
-        document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
-
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
         const isMain = event.branch === 'main' || event.branch === 'master';
@@ -200,7 +312,8 @@ function update(dt) {
         const mainY = height * 0.8;
 
         if (!isMain) {
-            if (!ships.has(event.branch)) {
+            const shipKey = event.email || event.author || 'unknown';
+            if (!ships.has(shipKey)) {
                 const side = Math.random() > 0.5 ? 1 : -1;
                 
                 // Trigger Avatar Image Load
@@ -210,21 +323,34 @@ function update(dt) {
                     avatars.set(event.avatarUrl, img);
                 }
 
-                ships.set(event.branch, {
+                ships.set(shipKey, {
                     x: mainX + side * (100 + Math.random() * 200),
                     targetX: mainX + side * (150 + Math.random() * 150),
                     y: height * 0.2 + Math.random() * (height * 0.4),
                     color: SHIP_COLORS[ships.size % SHIP_COLORS.length],
                     avatarUrl: event.avatarUrl,
                     is_conductor: event.is_conductor || false,
-                    active: true
+                    active: true,
+                    name: event.author || 'Unknown',
+                    branch: event.branch
                 });
-            } else if (event.is_conductor) {
-                // Upgrade to conductor ship
-                ships.get(event.branch).is_conductor = true;
+            } else {
+                const ship = ships.get(shipKey);
+                const wasInactive = !ship.active;
+                ship.branch = event.branch;
+                if (event.is_conductor) {
+                    ship.is_conductor = true;
+                }
+                ship.active = true;
+                if (wasInactive) {
+                    const side = Math.random() > 0.5 ? 1 : -1;
+                    ship.x = mainX + side * (100 + Math.random() * 200);
+                    ship.targetX = mainX + side * (150 + Math.random() * 150);
+                    ship.y = height * 0.2 + Math.random() * (height * 0.4);
+                }
             }
 
-            const ship = ships.get(event.branch);
+            const ship = ships.get(shipKey);
             
             if (event.is_merge) {
                 ship.targetX = mainX;
@@ -456,7 +582,7 @@ function draw() {
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.strokeStyle = ship.color;
         ctx.lineWidth = 2;
-        const text = ship.is_conductor ? `🪄 ${branch}` : `🌿 ${branch}`;
+        const text = ship.is_conductor ? `🪄 ${ship.name}` : `🌿 ${ship.name}`;
         ctx.font = '12px "Share Tech Mono"';
         const tw = ctx.measureText(text).width;
         ctx.fillRect(ship.x - tw/2 - 5, ship.y - 65, tw + 10, 20);
@@ -592,8 +718,19 @@ function loop(timestamp) {
 }
 
 // Controls
-document.getElementById('btnPlay').onclick = () => isPlaying = true;
+document.getElementById('btnPlay').onclick = () => {
+    const overlay = document.getElementById('briefingOverlay');
+    if (overlay) overlay.classList.add('hidden');
+    isPlaying = true;
+};
 document.getElementById('btnPause').onclick = () => isPlaying = false;
+const btnStartBriefing = document.getElementById('btnStartBriefing');
+if (btnStartBriefing) {
+    btnStartBriefing.onclick = () => {
+        document.getElementById('briefingOverlay').classList.add('hidden');
+        isPlaying = true;
+    };
+}
 const btnReset = document.getElementById('btnReset');
 if (btnReset) {
     btnReset.onclick = () => {
@@ -602,12 +739,18 @@ if (btnReset) {
             currentTime = new Date(timeline[0].timestamp).getTime();
             score = 0;
             totalCommits = 0;
+            activePlayers.clear();
             ships.clear();
             lasers = [];
             explosions = [];
             tractorBeams = [];
             activeBranches = 0;
             isPlaying = false;
+            document.getElementById('playersDisplay').innerText = '0';
+            
+            // Show briefing again
+            const briefingData = preScanTimeline(timeline);
+            showBriefing(briefingData.players, briefingData.branches, currentRepoName, timeline.length);
         }
     };
 }

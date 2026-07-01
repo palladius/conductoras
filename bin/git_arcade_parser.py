@@ -46,7 +46,12 @@ class GitHistoryParser:
                     sha = parts[1]
                     date_iso = parts[2]
                     author = parts[3]
-                    email = parts[4]
+                    email = parts[4].strip().lower()
+                    if '@' in email:
+                        local_part, domain = email.split('@', 1)
+                        if '+' in local_part:
+                            local_part = local_part.split('+', 1)[0]
+                        email = f"{local_part}@{domain}"
                     subject = "|".join(parts[5:-1]) if len(parts) > 7 else parts[5]
                     refs = parts[-1] if len(parts) >= 7 else ""
                     

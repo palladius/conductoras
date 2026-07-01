@@ -82,7 +82,10 @@
     <div class="hud hud-top">
         <div>SCORE: <span id="scoreDisplay">000000</span></div>
         <div class="text-center retro-text">GIT HISTORY ARCADE</div>
-        <div>COMMITS: <span id="commitsDisplay">0</span></div>
+        <div class="flex gap-6">
+            <div>PLAYERS: <span id="playersDisplay">0</span></div>
+            <div>COMMITS: <span id="commitsDisplay">0</span></div>
+        </div>
     </div>
 
     <div class="hud hud-bottom flex flex-col gap-4">
@@ -104,6 +107,38 @@
         </div>
         <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-cyan-900">
             <div id="progressBar" class="bg-cyan-400 h-full w-0 shadow-[0_0_10px_#0ff]"></div>
+        </div>
+    </div>
+
+    <div id="briefingOverlay" class="absolute inset-0 z-20 flex items-center justify-center bg-black/85 backdrop-blur-sm pointer-events-auto transition-opacity duration-300 hidden">
+        <div class="max-w-2xl w-full mx-4 bg-gray-950/90 border-4 border-[#0ff] shadow-[0_0_30px_#0ff] rounded-lg p-6 max-h-[85vh] overflow-y-auto flex flex-col font-mono">
+            <h2 class="text-3xl text-center retro-text font-bold mb-4 tracking-wider" style="font-family: 'Press Start 2P', cursive; text-shadow: 0 0 10px #f0f;">MISSION BRIEFING</h2>
+            <div id="briefingRepoName" class="text-xl text-[#0ff] text-center mb-6 font-bold uppercase border-b-2 border-dashed border-[#0ff]/40 pb-2">REPO: </div>
+            
+            <div class="grid grid-cols-2 gap-4 text-lg mb-6">
+                <div class="bg-cyan-950/30 border border-[#0ff]/30 p-3 rounded flex flex-col items-center">
+                    <span class="text-gray-400 text-sm">TOTAL COMMITS</span>
+                    <span id="briefingCommits" class="text-[#0ff] text-3xl font-extrabold tracking-widest mt-1">0</span>
+                </div>
+                <div class="bg-cyan-950/30 border border-[#0ff]/30 p-3 rounded flex flex-col items-center">
+                    <span class="text-gray-400 text-sm">ACTIVE COMMITTERS</span>
+                    <span id="briefingPlayers" class="text-[#0ff] text-3xl font-extrabold tracking-widest mt-1">0</span>
+                </div>
+            </div>
+
+            <h3 class="text-lg text-cyan-400 font-bold mb-3 border-b border-[#0ff]/20 pb-1 flex items-center gap-2">
+                <span>🛸</span> FLEET DEPLOYMENT (BRANCHES & PLAYERS)
+            </h3>
+            
+            <div id="briefingFleetList" class="flex flex-col gap-3 mb-6 overflow-y-auto pr-2 max-h-[35vh]">
+                <!-- Dynamic fleet rows go here -->
+            </div>
+
+            <div class="mt-auto flex justify-center">
+                <button id="btnStartBriefing" class="btn text-xl px-12 py-3 bg-[#0ff]/20 text-[#0ff] font-extrabold hover:bg-[#0ff] hover:text-[#000] transition-all duration-300 shadow-[0_0_15px_#0ff] animate-pulse" style="font-family: 'Press Start 2P', cursive;">
+                    LAUNCH MISSION
+                </button>
+            </div>
         </div>
     </div>
 

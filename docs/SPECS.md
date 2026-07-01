@@ -29,3 +29,22 @@ We need some way to signify the passing of time, maybe days or months have paral
 Main should be a nice "sprite", maybe generated with NanoBanana with some sort of transparency so its not a stupid SQUARE/RECTANGLE. It should be some sort of "git starship" with "main" pixelated, but otherwise rounded and super cool. This starship sends super cool special effects using the best that JS has to offer, in google-themed colors. Similar to Star Trek teleporting with the idea of an "attracting ray beam" (a tractor beam); this is the metaphor we want to convey.
 
 The vertical position of "main" starship is the position of `current_time()`. So for instance, if we're passing Jul 2026, when the line crosses the center of the starship, THEN the git repo has passed midnight of 1 jul 2026.
+
+## Committer Characters & Playability
+
+- **Spaceships as Committer Avatars (Characters)**: Spaceships represent individual **committers (players)** rather than git branches. 
+  - Each developer is assigned a unique, vibrant neon color.
+  - The spaceship's overhead label displays the developer's full **Name Surname** (from their git author details) instead of the branch name.
+  - A developer's ship dynamically **spawns** on screen only when they make their first commit in the timeline.
+  - When their branch is merged, their ship dives into the main mothership and deactivates. When they commit again, their ship dynamically reactivates and spawns at a new starting position.
+- **Conductor Status**: If a player ever makes a "Conductor" commit, their spaceship shape transforms into a wizard wand (`🪄`) with a glowing tip and a custom star SVG, representing the "magic of a conductor". Otherwise, they fly standard Gyruss-style space fighters (`🌿`).
+
+## Mission Briefing & HUD
+
+- **HUD Counter**: The top HUD displays a real-time counter of unique **PLAYERS** (unique committers processed so far) next to the total commits counter.
+- **Email Alias Merging**: Plus-address aliases (e.g., `user+alias@google.com`) are normalized by the parser to strip out sub-addressing suffixes. This ensures all aliases are merged into the same player, sharing the same spaceship, color, and avatar.
+- **Mission Briefing Overlay (Pre-Start state)**: 
+  - Upon loading a repo or resetting the timeline, the game enters a paused state and presents a retro, neon-themed overlay card.
+  - It shows general statistics: **REPO NAME**, **TOTAL COMMITS**, and **ACTIVE COMMITTERS**.
+  - It displays a scrollable grid of the player fleet. Each card contains the player's avatar, name, email, primary branch, and a visual preview (using the exact color and SVG geometry) of their assigned spaceship/wand.
+  - Clicking **LAUNCH MISSION** or the HUD **PLAY** button hides the briefing card and runs/resumes the timeline animation.
