@@ -51,6 +51,28 @@ class ArcadeHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(timeline).encode())
             return
+
+        elif parsed_path.path == "/api/tracks":
+            query = urllib.parse.parse_qs(parsed_path.query)
+            repo_name = query.get("repo", [""])[0]
+            repo_path = os.path.join(GIT_DIR, repo_name)
+            
+            if not repo_name or not os.path.exists(repo_path):
+                self.send_response(404)
+                self.end_headers()
+                return
+                
+            tracks_dir = os.path.join(repo_path, "conductor", "tracks")
+            tracks = []
+            if os.path.isdir(tracks_dir):
+                tracks = [d for d in os.listdir(tracks_dir) if os.path.isdir(os.path.join(tracks_dir, d))]
+            tracks.sort()
+            
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(tracks).encode())
+            return
             
         super().do_GET()
 
