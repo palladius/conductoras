@@ -9,6 +9,14 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+let mouseX = 0;
+let mouseY = 0;
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+});
+
 // Game State
 let isPlaying = false;
 let gameSpeed = 10;
@@ -22,6 +30,7 @@ let totalCommits = 0;
 let activePlayers = new Set();
 let activeTracks = new Set();
 let allRepoTracks = [];
+let tracksLifespans = new Map();
 
 // Entities
 let stars = [];
@@ -91,11 +100,21 @@ function initStars() {
 
 function preScanTimeline(timelineData) {
     const playersMap = new Map(); // email -> { name, email, avatarUrl, color, is_conductor, track, branches: Set }
-    const tracksSet = new Set();
+    const tracksMap = new Map(); // trackName -> { firstTime, lastTime }
     
     timelineData.forEach(event => {
         if (event.track) {
-            tracksSet.add(event.track);
+            const eventTime = new Date(event.timestamp).getTime();
+            if (!tracksMap.has(event.track)) {
+                tracksMap.set(event.track, {
+                    firstTime: eventTime,
+                    lastTime: eventTime
+                });
+            } else {
+                const info = tracksMap.get(event.track);
+                info.firstTime = Math.min(info.firstTime, eventTime);
+                info.lastTime = Math.max(info.lastTime, eventTime);
+            }
         }
         if (event.email) {
             if (!playersMap.has(event.email)) {
@@ -123,7 +142,8 @@ function preScanTimeline(timelineData) {
 
     return {
         players: Array.from(playersMap.values()),
-        totalTracksCount: tracksSet.size
+        totalTracksCount: tracksMap.size,
+        tracksLifespans: tracksMap
     };
 }
 
@@ -248,6 +268,7 @@ async function loadTimeline(repoName) {
             
             // Pre-scan to build player and ship data
             const briefingData = preScanTimeline(timeline);
+            tracksLifespans = briefingData.tracksLifespans;
             showBriefing(briefingData.players, repoName, timeline.length, allRepoTracks.length || briefingData.totalTracksCount);
         } else {
             document.getElementById('dateDisplay').innerText = 'No commits found';
@@ -467,72 +488,131 @@ function getTrackNodeCoords(trackName) {
     const idx = allRepoTracks.indexOf(trackName);
     if (idx === -1) return null;
     
-    const leftCount = Math.ceil(allRepoTracks.length / 2);
-    const isOnLeft = idx < leftCount;
+    const cols = 11;
+    const colSpacing = 65;
+    const rowSpacing = 35;
     
-    const startY = 160;
-    const endY = height - 120;
-    const availableHeight = endY - startY;
+    const row = Math.floor(idx / cols);
+    const col = idx % cols;
     
-    if (isOnLeft) {
-        const spacing = leftCount > 1 ? availableHeight / (leftCount - 1) : 35;
-        return {
-            x: 25,
-            y: startY + (idx * spacing)
-        };
+    const gridWidth = (cols - 1) * colSpacing;
+    const startX = (width - gridWidth) / 2;
+    const startY = 120; // Float invaders below HUD
+    
+    return {
+        x: startX + col * colSpacing,
+        y: startY + row * rowSpacing
+    };
+}
+
+function drawInvader(x, y, size, color, isGlowing) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = color;
+    if (isGlowing) {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = color;
     } else {
-        const rightCount = allRepoTracks.length - leftCount;
-        const rightIdx = idx - leftCount;
-        const spacing = rightCount > 1 ? availableHeight / (rightCount - 1) : 35;
-        return {
-            x: width - 25,
-            y: startY + (rightIdx * spacing)
-        };
+        ctx.shadowBlur = 0;
     }
+    
+    const pixelSize = size / 8;
+    const invaderMap = [
+        [0,0,1,0,0,1,0,0],
+        [0,1,0,1,1,0,1,0],
+        [0,1,1,1,1,1,1,0],
+        [1,1,0,1,1,0,1,1],
+        [1,1,1,1,1,1,1,1],
+        [0,1,1,1,1,1,1,0],
+        [0,1,0,0,0,0,1,0],
+        [1,0,0,0,0,0,0,1]
+    ];
+    
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            if (invaderMap[r][c]) {
+                ctx.fillRect((c - 4) * pixelSize, (r - 4) * pixelSize, pixelSize, pixelSize);
+            }
+        }
+    }
+    ctx.restore();
 }
 
 function drawTrackNodes() {
     if (!allRepoTracks || allRepoTracks.length === 0) return;
     
-    const leftCount = Math.ceil(allRepoTracks.length / 2);
-    
+    const targetedTracks = new Set();
+    ships.forEach(ship => {
+        if (ship.active && ship.rawTrackName) {
+            targetedTracks.add(ship.rawTrackName);
+        }
+    });
+
+    let hoveredTrack = null;
+    let hoveredCoords = null;
+    let hoveredColor = null;
+
     allRepoTracks.forEach((track, idx) => {
         const coords = getTrackNodeCoords(track);
         if (!coords) return;
         
-        const isDiscovered = activeTracks.has(track);
-        const cleanName = track.replace(/_\d{8}$/, '').replace(/_/g, ' ').toUpperCase();
-        
-        ctx.beginPath();
-        ctx.arc(coords.x, coords.y, 4, 0, Math.PI * 2);
-        
-        if (isDiscovered) {
-            ctx.fillStyle = '#0ff';
-            ctx.shadowBlur = 6;
-            ctx.shadowColor = '#0ff';
-            ctx.fill();
-            
-            ctx.fillStyle = '#0ff';
-            ctx.font = '9px "Share Tech Mono"';
-            ctx.shadowBlur = 0;
-        } else {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-            ctx.fill();
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-            ctx.font = '9px "Share Tech Mono"';
+        // Lifespan check: only render when the track exists in the timeline's active range
+        const info = tracksLifespans.get(track);
+        if (info && (currentTime < info.firstTime || currentTime > info.lastTime)) {
+            return;
         }
         
-        const isOnLeft = idx < leftCount;
-        if (isOnLeft) {
-            ctx.textAlign = 'left';
-            ctx.fillText(cleanName, coords.x + 12, coords.y + 3);
-        } else {
-            ctx.textAlign = 'right';
-            ctx.fillText(cleanName, coords.x - 12, coords.y + 3);
+        const isDiscovered = activeTracks.has(track);
+        const isTargeted = targetedTracks.has(track);
+        
+        let color = 'rgba(255, 255, 255, 0.15)';
+        let glowing = false;
+        
+        if (isTargeted) {
+            color = '#ff0'; // neon yellow for active/targeted
+            glowing = true;
+        } else if (isDiscovered) {
+            color = '#0f0'; // neon green for completed
+            glowing = true;
+        }
+        
+        // Draw 16px pixel alien invader
+        drawInvader(coords.x, coords.y, 20, color, glowing);
+        
+        // Check hover
+        const dist = Math.hypot(mouseX - coords.x, mouseY - coords.y);
+        if (dist < 15) {
+            hoveredTrack = track;
+            hoveredCoords = coords;
+            hoveredColor = color;
         }
     });
-    ctx.textAlign = 'left'; // restore default
+
+    // Draw hover tooltip on top of all invaders
+    if (hoveredTrack && hoveredCoords) {
+        const cleanName = hoveredTrack.replace(/_\d{8}$/, '').replace(/_/g, ' ').toUpperCase();
+        ctx.save();
+        ctx.font = '10px "Share Tech Mono"';
+        ctx.shadowBlur = 0;
+        
+        const tw = ctx.measureText(cleanName).width;
+        const boxW = tw + 16;
+        const boxH = 20;
+        const boxX = hoveredCoords.x - boxW / 2;
+        const boxY = hoveredCoords.y - 32;
+        
+        ctx.fillStyle = 'rgba(5, 5, 15, 0.95)';
+        ctx.strokeStyle = hoveredColor;
+        ctx.lineWidth = 1.5;
+        
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+        
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'left';
+        ctx.fillText(cleanName, boxX + 8, boxY + 14);
+        ctx.restore();
+    }
 }
 
 function draw() {
@@ -616,7 +696,9 @@ function draw() {
         // Draw tractor beam laser connection to the corresponding track node if active!
         if (ship.active && ship.rawTrackName) {
             const coords = getTrackNodeCoords(ship.rawTrackName);
-            if (coords) {
+            const info = tracksLifespans.get(ship.rawTrackName);
+            const isWithinLifespan = info && (currentTime >= info.firstTime && currentTime <= info.lastTime);
+            if (coords && isWithinLifespan) {
                 ctx.save();
                 ctx.beginPath();
                 ctx.moveTo(ship.x, ship.y);
@@ -903,6 +985,7 @@ if (btnReset) {
             
             // Show briefing again
             const briefingData = preScanTimeline(timeline);
+            tracksLifespans = briefingData.tracksLifespans;
             showBriefing(briefingData.players, currentRepoName, timeline.length, briefingData.totalTracksCount);
         }
     };

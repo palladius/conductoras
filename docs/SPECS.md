@@ -52,8 +52,11 @@ The vertical position of "main" starship is the position of `current_time()`. So
 ## Conductor Tracks & Demo Recording
 
 - **Track Parsing & Formatting**: Commits that modify files under `conductor/tracks/` are automatically scanned. The parser extracts the subfolder name as the commit's `track` and generates a user-friendly version (`track_display`) by stripping trailing date suffixes (e.g., `_20260616`) and converting underscores to title-case spaces.
-- **Track Status Display**:
+- **Track Status Display & Invader Grid**:
   - The Mission Briefing overlay card displays the **LATEST TRACK** worked on by each committer.
-  - In the canvas simulation, when a ship is active on a track, its overhead label box dynamically expands its height to render a neon-cyan subtitle showing the track name: `Track: Disable Mock Fallback Dev`.
+  - On the game canvas, tracks are visualized at the top of the screen as a grid of retro alien invaders (Space Invaders style) that can be hovered over to view tooltips of their clean track names.
+  - **Dynamic Lifespan**: An invader appears on the canvas only at the timestamp of its **first commit** in the timeline, and disappears (vanishes/is cleared) at the timestamp of its **last commit** (representing task completion).
+  - While a track is active (between its first and last commits), the developer ship working on it fires a pulsing, neon-cyan laser link directly connecting the ship to the invader.
+  - Invaders are color-coded: neon-green (`#0f0`) for completed tracks in the timeline, pulsing neon-yellow (`#ff0`) for currently active targets, and dimmed grey for unstarted.
 - **HUD & Briefing Track Counters**: Both the top HUD bar and the initial briefing card display the count of unique Conductor **TRACKS** present in the timeline, incrementing dynamically as the simulation progresses.
 - **Demo Recording Automation**: Programmatic browser video captures of the arcade simulation are automated using `shot-scraper video storyboard.yml --mp4`.
