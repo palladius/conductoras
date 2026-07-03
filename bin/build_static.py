@@ -35,6 +35,18 @@ def main():
         
     print(f"Saved {len(timeline)} commits to {output_file}")
     
+    # Save tracks.json
+    tracks_dir = os.path.join(repo_path, "conductor", "tracks")
+    tracks = []
+    if os.path.isdir(tracks_dir):
+        tracks = [d for d in os.listdir(tracks_dir) if os.path.isdir(os.path.join(tracks_dir, d))]
+    tracks.sort()
+    
+    tracks_file = os.path.join(output_dir, "tracks.json")
+    with open(tracks_file, "w") as f:
+        json.dump(tracks, f, indent=2)
+    print(f"Saved {len(tracks)} tracks to {tracks_file}")
+    
     # Update repos.json
     repos_json_path = os.path.join(html_dir, "repos.json")
     repos = []

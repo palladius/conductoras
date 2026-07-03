@@ -21,6 +21,7 @@ let score = 0;
 let totalCommits = 0;
 let activePlayers = new Set();
 let activeTracks = new Set();
+let allRepoTracks = [];
 
 // Entities
 let stars = [];
@@ -198,6 +199,7 @@ async function loadTimeline(repoName) {
     totalCommits = 0;
     activePlayers.clear();
     activeTracks.clear();
+    allRepoTracks = [];
     ships.clear();
     lasers = [];
     explosions = [];
@@ -212,6 +214,19 @@ async function loadTimeline(repoName) {
     document.getElementById('playersDisplay').innerText = '0';
     document.getElementById('tracksDisplay').innerText = '0';
     document.getElementById('dateDisplay').innerText = 'Loading...';
+
+    // Load tracks list first
+    try {
+        let tracksRes = await fetch(`/api/tracks?repo=${encodeURIComponent(repoName)}&t=${Date.now()}`);
+        if (!tracksRes.ok) {
+            tracksRes = await fetch(`${repoName}/tracks.json`);
+        }
+        if (tracksRes.ok) {
+            allRepoTracks = await tracksRes.json();
+        }
+    } catch (e) {
+        console.error("Failed to load tracks list", e);
+    }
 
     try {
         let res = await fetch(`/api/timeline?repo=${encodeURIComponent(repoName)}&t=${Date.now()}`);
@@ -233,7 +248,7 @@ async function loadTimeline(repoName) {
             
             // Pre-scan to build player and ship data
             const briefingData = preScanTimeline(timeline);
-            showBriefing(briefingData.players, repoName, timeline.length, briefingData.totalTracksCount);
+            showBriefing(briefingData.players, repoName, timeline.length, allRepoTracks.length || briefingData.totalTracksCount);
         } else {
             document.getElementById('dateDisplay').innerText = 'No commits found';
         }
@@ -320,7 +335,8 @@ function update(dt) {
         document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
         document.getElementById('commitsDisplay').innerText = totalCommits;
         document.getElementById('playersDisplay').innerText = activePlayers.size;
-        document.getElementById('tracksDisplay').innerText = activeTracks.size;
+        const totalTracksText = allRepoTracks.length ? `${activeTracks.size} / ${allRepoTracks.length}` : activeTracks.size;
+        document.getElementById('tracksDisplay').innerText = totalTracksText;
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
