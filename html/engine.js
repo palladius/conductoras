@@ -11,10 +11,46 @@ resize();
 
 let mouseX = 0;
 let mouseY = 0;
+
+function getTrackUnderMouse(mx, my) {
+    if (!allRepoTracks || allRepoTracks.length === 0) return null;
+    for (let track of allRepoTracks) {
+        const info = tracksLifespans.get(track);
+        if (!info || currentTime < info.firstTime || currentTime > info.lastTime) {
+            continue;
+        }
+        const coords = getTrackNodeCoords(track);
+        if (!coords) continue;
+        
+        const w = 190;
+        const h = 24;
+        
+        if (mx >= coords.x - w/2 && mx <= coords.x + w/2 &&
+            my >= coords.y - h/2 && my <= coords.y + h/2) {
+            return { track, info };
+        }
+    }
+    return null;
+}
+
 canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     mouseX = e.clientX - rect.left;
     mouseY = e.clientY - rect.top;
+    
+    const hovered = getTrackUnderMouse(mouseX, mouseY);
+    canvas.style.cursor = (hovered && hovered.info.githubIssueUrl) ? 'pointer' : 'default';
+});
+
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    const clicked = getTrackUnderMouse(clickX, clickY);
+    if (clicked && clicked.info.githubIssueUrl) {
+        window.open(clicked.info.githubIssueUrl, '_blank');
+    }
 });
 
 // Game State
@@ -108,12 +144,20 @@ function preScanTimeline(timelineData) {
             if (!tracksMap.has(event.track)) {
                 tracksMap.set(event.track, {
                     firstTime: eventTime,
-                    lastTime: eventTime
+                    lastTime: eventTime,
+                    cleanName: event.track_display || event.track,
+                    githubIssueUrl: event.github_issue_url || null
                 });
             } else {
                 const info = tracksMap.get(event.track);
                 info.firstTime = Math.min(info.firstTime, eventTime);
                 info.lastTime = Math.max(info.lastTime, eventTime);
+                if (event.track_display) {
+                    info.cleanName = event.track_display;
+                }
+                if (event.github_issue_url) {
+                    info.githubIssueUrl = event.github_issue_url;
+                }
             }
         }
         if (event.email) {
@@ -332,7 +376,7 @@ function update(dt) {
     dynamicSpeedMultiplier += (targetSpeed - dynamicSpeedMultiplier) * 0.05;
 
     // Advance time
-    const timeStep = dt * (gameSpeed * dynamicSpeedMultiplier) * 100000; 
+    const timeStep = dt * (gameSpeed * dynamicSpeedMultiplier) * 8000000; 
     currentTime += timeStep;
     
     // Recalculate active branches
@@ -365,8 +409,8 @@ function update(dt) {
         const mainX = width / 2;
         const mainY = height * 0.8;
 
-        if (!isMain) {
-            const shipKey = event.email || event.author || 'unknown';
+        if (event.track) {
+            const shipKey = event.track;
             if (!ships.has(shipKey)) {
                 const side = Math.random() > 0.5 ? 1 : -1;
                 
@@ -377,17 +421,21 @@ function update(dt) {
                     avatars.set(event.avatarUrl, img);
                 }
 
+                const trackIdx = allRepoTracks.indexOf(event.track);
+                const color = SHIP_COLORS[(trackIdx >= 0 ? trackIdx : ships.size) % SHIP_COLORS.length];
+
                 ships.set(shipKey, {
                     x: mainX + side * (100 + Math.random() * 200),
                     targetX: mainX + side * (150 + Math.random() * 150),
                     y: height * 0.2 + Math.random() * (height * 0.4),
-                    color: SHIP_COLORS[ships.size % SHIP_COLORS.length],
+                    color: color,
                     avatarUrl: event.avatarUrl,
                     is_conductor: event.is_conductor || false,
                     active: true,
-                    name: event.author || 'Unknown',
+                    name: event.track_display || event.track,
                     branch: event.branch,
-                    track: event.track_display || event.track || null
+                    rawTrackName: event.track,
+                    lastAuthor: event.author || 'Unknown'
                 });
             } else {
                 const ship = ships.get(shipKey);
@@ -396,9 +444,8 @@ function update(dt) {
                 if (event.is_conductor) {
                     ship.is_conductor = true;
                 }
-                if (event.track) {
-                    ship.track = event.track_display || event.track;
-                }
+                ship.lastAuthor = event.author || 'Unknown';
+                ship.avatarUrl = event.avatarUrl;
                 ship.active = true;
                 if (wasInactive) {
                     const side = Math.random() > 0.5 ? 1 : -1;
@@ -488,16 +535,17 @@ function getTrackNodeCoords(trackName) {
     const idx = allRepoTracks.indexOf(trackName);
     if (idx === -1) return null;
     
-    const cols = 11;
-    const colSpacing = 65;
-    const rowSpacing = 35;
+    // 3 columns of rectangles
+    const cols = 3;
+    const colSpacing = 220;
+    const rowSpacing = 36;
     
     const row = Math.floor(idx / cols);
     const col = idx % cols;
     
     const gridWidth = (cols - 1) * colSpacing;
     const startX = (width - gridWidth) / 2;
-    const startY = 120; // Float invaders below HUD
+    const startY = 120; // Float rectangles below HUD
     
     return {
         x: startX + col * colSpacing,
@@ -505,36 +553,41 @@ function getTrackNodeCoords(trackName) {
     };
 }
 
-function drawInvader(x, y, size, color, isGlowing) {
+function drawTrackRect(x, y, w, h, text, color, isGlowing) {
     ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = color;
+    
+    // Draw background
+    ctx.fillStyle = 'rgba(5, 5, 15, 0.85)';
+    ctx.fillRect(x - w/2, y - h/2, w, h);
+    
+    // Draw border
+    ctx.strokeStyle = color;
+    ctx.lineWidth = isGlowing ? 2 : 1;
     if (isGlowing) {
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12;
         ctx.shadowColor = color;
     } else {
         ctx.shadowBlur = 0;
     }
+    ctx.strokeRect(x - w/2, y - h/2, w, h);
     
-    const pixelSize = size / 8;
-    const invaderMap = [
-        [0,0,1,0,0,1,0,0],
-        [0,1,0,1,1,0,1,0],
-        [0,1,1,1,1,1,1,0],
-        [1,1,0,1,1,0,1,1],
-        [1,1,1,1,1,1,1,1],
-        [0,1,1,1,1,1,1,0],
-        [0,1,0,0,0,0,1,0],
-        [1,0,0,0,0,0,0,1]
-    ];
+    // Draw text inside the box
+    ctx.fillStyle = color;
+    ctx.font = '9px "Share Tech Mono"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
     
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-            if (invaderMap[r][c]) {
-                ctx.fillRect((c - 4) * pixelSize, (r - 4) * pixelSize, pixelSize, pixelSize);
-            }
+    let displayText = text;
+    const maxTextWidth = w - 10;
+    if (ctx.measureText(displayText).width > maxTextWidth) {
+        while (ctx.measureText(displayText + '..').width > maxTextWidth && displayText.length > 0) {
+            displayText = displayText.slice(0, -1);
         }
+        displayText += '..';
     }
+    
+    ctx.fillText(displayText, x, y);
     ctx.restore();
 }
 
@@ -548,19 +601,15 @@ function drawTrackNodes() {
         }
     });
 
-    let hoveredTrack = null;
-    let hoveredCoords = null;
-    let hoveredColor = null;
-
     allRepoTracks.forEach((track, idx) => {
-        const coords = getTrackNodeCoords(track);
-        if (!coords) return;
-        
         // Lifespan check: only render when the track exists in the timeline's active range
         const info = tracksLifespans.get(track);
-        if (info && (currentTime < info.firstTime || currentTime > info.lastTime)) {
+        if (!info || currentTime < info.firstTime || currentTime > info.lastTime) {
             return;
         }
+
+        const coords = getTrackNodeCoords(track);
+        if (!coords) return;
         
         const isDiscovered = activeTracks.has(track);
         const isTargeted = targetedTracks.has(track);
@@ -576,43 +625,9 @@ function drawTrackNodes() {
             glowing = true;
         }
         
-        // Draw 16px pixel alien invader
-        drawInvader(coords.x, coords.y, 20, color, glowing);
-        
-        // Check hover
-        const dist = Math.hypot(mouseX - coords.x, mouseY - coords.y);
-        if (dist < 15) {
-            hoveredTrack = track;
-            hoveredCoords = coords;
-            hoveredColor = color;
-        }
+        const cleanName = info.cleanName.toUpperCase();
+        drawTrackRect(coords.x, coords.y, 190, 24, cleanName, color, glowing);
     });
-
-    // Draw hover tooltip on top of all invaders
-    if (hoveredTrack && hoveredCoords) {
-        const cleanName = hoveredTrack.replace(/_\d{8}$/, '').replace(/_/g, ' ').toUpperCase();
-        ctx.save();
-        ctx.font = '10px "Share Tech Mono"';
-        ctx.shadowBlur = 0;
-        
-        const tw = ctx.measureText(cleanName).width;
-        const boxW = tw + 16;
-        const boxH = 20;
-        const boxX = hoveredCoords.x - boxW / 2;
-        const boxY = hoveredCoords.y - 32;
-        
-        ctx.fillStyle = 'rgba(5, 5, 15, 0.95)';
-        ctx.strokeStyle = hoveredColor;
-        ctx.lineWidth = 1.5;
-        
-        ctx.fillRect(boxX, boxY, boxW, boxH);
-        ctx.strokeRect(boxX, boxY, boxW, boxH);
-        
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'left';
-        ctx.fillText(cleanName, boxX + 8, boxY + 14);
-        ctx.restore();
-    }
 }
 
 function draw() {
@@ -798,31 +813,29 @@ function draw() {
         ctx.lineWidth = 2;
         
         const titleText = ship.is_conductor ? `🪄 ${ship.name}` : `🌿 ${ship.name}`;
-        const subtitleText = ship.track ? `Track: ${ship.track}` : '';
+        const subtitleText = `Dev: ${ship.lastAuthor || 'Unknown'}`;
         
         ctx.font = '12px "Share Tech Mono"';
         const titleWidth = ctx.measureText(titleText).width;
         
         ctx.font = '10px "Share Tech Mono"';
-        const subtitleWidth = subtitleText ? ctx.measureText(subtitleText).width : 0;
+        const subtitleWidth = ctx.measureText(subtitleText).width;
         
         const tw = Math.max(titleWidth, subtitleWidth);
-        const boxHeight = subtitleText ? 36 : 20;
+        const boxHeight = 36;
         
         ctx.fillRect(ship.x - tw/2 - 6, ship.y - 65, tw + 12, boxHeight);
         ctx.strokeRect(ship.x - tw/2 - 6, ship.y - 65, tw + 12, boxHeight);
         
         // Draw title
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = ship.color;
         ctx.font = '12px "Share Tech Mono"';
         ctx.fillText(titleText, ship.x - titleWidth/2, ship.y - 51);
         
-        // Draw subtitle (track name)
-        if (subtitleText) {
-            ctx.fillStyle = '#0ff'; // neon cyan for the track
-            ctx.font = '10px "Share Tech Mono"';
-            ctx.fillText(subtitleText, ship.x - subtitleWidth/2, ship.y - 38);
-        }
+        // Draw subtitle (developer name)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '10px "Share Tech Mono"';
+        ctx.fillText(subtitleText, ship.x - subtitleWidth/2, ship.y - 38);
     });
 
     explosions.forEach(e => {

@@ -126,15 +126,35 @@ class GitHistoryParser:
         for commit in timeline:
             track = None
             track_display = None
+            issue_num = None
+            issue_url = None
             for f in commit.get("files", []):
                 match = re.match(r"^conductor/tracks/([^/]+)/", f["name"])
                 if match:
                     track = match.group(1)
+                    # Try to read metadata.json for the track
+                    metadata_path = os.path.join(self.repo_path, "conductor", "tracks", track, "metadata.json")
+                    if os.path.exists(metadata_path):
+                        try:
+                            with open(metadata_path, 'r') as mf:
+                                meta = json.load(mf)
+                                github_issue = meta.get("github_issue", {})
+                                issue_num = github_issue.get("number") or meta.get("github_issue_number")
+                                issue_url = github_issue.get("url") or meta.get("github_issue_url")
+                        except Exception:
+                            pass
+                    
                     clean_name = re.sub(r'_\d{8}$', '', track)
-                    track_display = clean_name.replace('_', ' ').title()
+                    display_name = clean_name.replace('_', ' ').title()
+                    if issue_num:
+                        track_display = f"#{issue_num} {display_name}"
+                    else:
+                        track_display = display_name
                     break
             commit["track"] = track
             commit["track_display"] = track_display
+            commit["github_issue_number"] = issue_num
+            commit["github_issue_url"] = issue_url
             
         return timeline
 

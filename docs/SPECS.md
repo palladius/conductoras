@@ -6,8 +6,8 @@ Controls are like in a video:
 1. PLAY: starts animation from where we are.
 1. PAUSE: Stops animation in the time we are now
 1. RESET: resets timeline to 0. Ready for another play.
-1. The Timeline bar: this is clickable with mouse and should set roughly the timeline from the first commit 
-1. Date should be visualized like in a 1980s-style youtube, with counter on top right or left, out of sight, but always incrementing. Also #branches at a given time should be visible. More branches active at a given time should give us more visual complexity and more SCORE :)
+1. The Timeline bar: this is clickable with mouse and should set roughly the timeline from the first commit
+1. Date should be visualized like in a 1980s-style youtube, with counter on top right or left, out of sight, but always incrementing. Also #branches at a given time should be visible. More branches active at a given time should give us more visual complexity and more SCORE :) User should be able to click at timeline in any point and "goto" the right time of timeline.
 
 PS. Ensure all visualized things don't overlap ;) Take screenshot every now and then to guarantee this.
 
@@ -32,18 +32,18 @@ The vertical position of "main" starship is the position of `current_time()`. So
 
 ## Committer Characters & Playability
 
-- **Spaceships as Committer Avatars (Characters)**: Spaceships represent individual **committers (players)** rather than git branches. 
-  - Each developer is assigned a unique, vibrant neon color.
-  - The spaceship's overhead label displays the developer's full **Name Surname** (from their git author details) instead of the branch name.
-  - A developer's ship dynamically **spawns** on screen only when they make their first commit in the timeline.
-  - When their branch is merged, their ship dives into the main mothership and deactivates. When they commit again, their ship dynamically reactivates and spawns at a new starting position.
-- **Conductor Status**: If a player ever makes a "Conductor" commit, their spaceship shape transforms into a wizard wand (`🪄`) with a glowing tip and a custom star SVG, representing the "magic of a conductor". Otherwise, they fly standard Gyruss-style space fighters (`🌿`).
+- **Spaceships as Track Avatars**: Spaceships represent individual active **Conductor Tracks** rather than committers.
+  - There is exactly **one spaceship (astronave) per active track** on screen.
+  - The spaceship's overhead badge displays the **Track Name** as the main title and the committing developer name as a subtitle (e.g., `Dev: Riccardo Carlesso`).
+  - A track ship dynamically **spawns** on screen only when the track is first committed in the timeline.
+  - When the track's last commit is processed (representing completion), its ship dives into the main mothership or deactivates, vanishing from the screen.
+- **Conductor Status**: If a player ever makes a "Conductor" commit on a track, its spaceship shape transforms into a wizard wand (`🪄`) with a glowing tip and a custom star SVG, representing the "magic of a conductor". Otherwise, they fly standard Gyruss-style space fighters (`🌿`).
 
 ## Mission Briefing & HUD
 
 - **HUD Counter**: The top HUD displays a real-time counter of unique **PLAYERS** (unique committers processed so far) next to the total commits counter.
 - **Email Alias Merging**: Plus-address aliases (e.g., `user+alias@google.com`) are normalized by the parser to strip out sub-addressing suffixes. This ensures all aliases are merged into the same player, sharing the same spaceship, color, and avatar.
-- **Mission Briefing Overlay (Pre-Start state)**: 
+- **Mission Briefing Overlay (Pre-Start state)**:
   - Upon loading a repo or resetting the timeline, the game enters a paused state and presents a retro, neon-themed overlay card.
   - It shows general statistics: **REPO NAME**, **TOTAL COMMITS**, and **ACTIVE COMMITTERS**.
   - It displays a scrollable grid of the player fleet. Each card contains the player's avatar, name, email, primary branch, and a visual preview (using the exact color and SVG geometry) of their assigned spaceship/wand.
