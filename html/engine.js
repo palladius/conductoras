@@ -813,29 +813,20 @@ function draw() {
         ctx.lineWidth = 2;
         
         const titleText = ship.is_conductor ? `🪄 ${ship.name}` : `🌿 ${ship.name}`;
-        const subtitleText = `Dev: ${ship.lastAuthor || 'Unknown'}`;
         
         ctx.font = '12px "Share Tech Mono"';
         const titleWidth = ctx.measureText(titleText).width;
         
-        ctx.font = '10px "Share Tech Mono"';
-        const subtitleWidth = ctx.measureText(subtitleText).width;
+        const tw = titleWidth;
+        const boxHeight = 20;
         
-        const tw = Math.max(titleWidth, subtitleWidth);
-        const boxHeight = 36;
-        
-        ctx.fillRect(ship.x - tw/2 - 6, ship.y - 65, tw + 12, boxHeight);
-        ctx.strokeRect(ship.x - tw/2 - 6, ship.y - 65, tw + 12, boxHeight);
+        ctx.fillRect(ship.x - tw/2 - 6, ship.y - 45, tw + 12, boxHeight);
+        ctx.strokeRect(ship.x - tw/2 - 6, ship.y - 45, tw + 12, boxHeight);
         
         // Draw title
         ctx.fillStyle = ship.color;
         ctx.font = '12px "Share Tech Mono"';
-        ctx.fillText(titleText, ship.x - titleWidth/2, ship.y - 51);
-        
-        // Draw subtitle (developer name)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.font = '10px "Share Tech Mono"';
-        ctx.fillText(subtitleText, ship.x - subtitleWidth/2, ship.y - 38);
+        ctx.fillText(titleText, ship.x - titleWidth/2, ship.y - 31);
     });
 
     explosions.forEach(e => {
