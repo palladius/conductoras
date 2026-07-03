@@ -462,6 +462,79 @@ function update(dt) {
     }
 }
 
+function getTrackNodeCoords(trackName) {
+    if (!allRepoTracks || allRepoTracks.length === 0) return null;
+    const idx = allRepoTracks.indexOf(trackName);
+    if (idx === -1) return null;
+    
+    const leftCount = Math.ceil(allRepoTracks.length / 2);
+    const isOnLeft = idx < leftCount;
+    
+    const startY = 160;
+    const endY = height - 120;
+    const availableHeight = endY - startY;
+    
+    if (isOnLeft) {
+        const spacing = leftCount > 1 ? availableHeight / (leftCount - 1) : 35;
+        return {
+            x: 25,
+            y: startY + (idx * spacing)
+        };
+    } else {
+        const rightCount = allRepoTracks.length - leftCount;
+        const rightIdx = idx - leftCount;
+        const spacing = rightCount > 1 ? availableHeight / (rightCount - 1) : 35;
+        return {
+            x: width - 25,
+            y: startY + (rightIdx * spacing)
+        };
+    }
+}
+
+function drawTrackNodes() {
+    if (!allRepoTracks || allRepoTracks.length === 0) return;
+    
+    const leftCount = Math.ceil(allRepoTracks.length / 2);
+    
+    allRepoTracks.forEach((track, idx) => {
+        const coords = getTrackNodeCoords(track);
+        if (!coords) return;
+        
+        const isDiscovered = activeTracks.has(track);
+        const cleanName = track.replace(/_\d{8}$/, '').replace(/_/g, ' ').toUpperCase();
+        
+        ctx.beginPath();
+        ctx.arc(coords.x, coords.y, 4, 0, Math.PI * 2);
+        
+        if (isDiscovered) {
+            ctx.fillStyle = '#0ff';
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = '#0ff';
+            ctx.fill();
+            
+            ctx.fillStyle = '#0ff';
+            ctx.font = '9px "Share Tech Mono"';
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+            ctx.font = '9px "Share Tech Mono"';
+        }
+        
+        const isOnLeft = idx < leftCount;
+        if (isOnLeft) {
+            ctx.textAlign = 'left';
+            ctx.fillText(cleanName, coords.x + 12, coords.y + 3);
+        } else {
+            ctx.textAlign = 'right';
+            ctx.fillText(cleanName, coords.x - 12, coords.y + 3);
+        }
+    });
+    ctx.textAlign = 'left'; // restore default
+}
+
 function draw() {
     ctx.fillStyle = '#050510';
     ctx.fillRect(0, 0, width, height);
@@ -472,6 +545,9 @@ function draw() {
         ctx.fillRect(s.x, s.y, s.size, s.size);
     });
     ctx.globalAlpha = 1.0;
+    
+    // Draw Conductor tracks constellation flanking the screen
+    drawTrackNodes();
     
     const mainX = width / 2;
     const mainY = height * 0.8;
@@ -537,6 +613,25 @@ function draw() {
 
     ctx.globalAlpha = 1.0;
     ships.forEach((ship, branch) => {
+        // Draw tractor beam laser connection to the corresponding track node if active!
+        if (ship.active && ship.rawTrackName) {
+            const coords = getTrackNodeCoords(ship.rawTrackName);
+            if (coords) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(ship.x, ship.y);
+                ctx.lineTo(coords.x, coords.y);
+                
+                const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 150);
+                ctx.strokeStyle = `rgba(0, 255, 255, ${0.15 + 0.3 * pulse})`;
+                ctx.lineWidth = 1.5 + 2 * pulse;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#0ff';
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
         // Calculate angle pointing towards main (target where they shoot lasers)
         const dx = mainX - ship.x;
         const dy = (height * 0.8) - ship.y;

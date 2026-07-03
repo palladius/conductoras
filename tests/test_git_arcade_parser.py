@@ -70,5 +70,30 @@ class TestGitArcadeParser(unittest.TestCase):
         timestamps = [c["timestamp"] for c in timeline]
         self.assertEqual(timestamps, sorted(timestamps), "Timeline is not sorted chronologically")
 
+    @unittest.skipIf(GitHistoryParser is None, "Parser not implemented yet")
+    def test_conductor_track_extraction(self):
+        # Create a commit modifying a file in conductor/tracks/my_track_20260601/
+        track_dir = os.path.join(self.repo_dir, "conductor", "tracks", "my_track_20260601")
+        os.makedirs(track_dir, exist_ok=True)
+        
+        with open(os.path.join(track_dir, "spec.md"), "w") as f:
+            f.write("Spec details\n")
+            
+        # Commit with a plus-addressed email
+        subprocess.run(["git", "config", "user.email", "test+alias@google.com"], cwd=self.repo_dir, check=True)
+        subprocess.run(["git", "add", "."], cwd=self.repo_dir, check=True)
+        subprocess.run(["git", "commit", "-m", "Add spec for my track"], cwd=self.repo_dir, check=True)
+        
+        parser = GitHistoryParser(self.repo_dir)
+        timeline = parser.generate_json_timeline()
+        
+        # Check track and email alias normalization
+        track_commits = [c for c in timeline if c.get("track") == "my_track_20260601"]
+        self.assertEqual(len(track_commits), 1, "Should have parsed 1 track commit")
+        
+        commit = track_commits[0]
+        self.assertEqual(commit["track_display"], "My Track")
+        self.assertEqual(commit["email"], "test@google.com")
+
 if __name__ == "__main__":
     unittest.main()
