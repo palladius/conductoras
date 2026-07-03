@@ -1,0 +1,23 @@
+output: demo.webm
+url: http://localhost:8000/?repo=adk-sre-benjamin
+
+viewport:
+  width: 1280
+  height: 800
+
+cursor:
+  visible: true
+  clicks: true
+  color: "#ff4f00"
+  size: 18
+  click_size: 44
+
+scenes:
+- name: Mission Briefing
+  do:
+  - pause: 6
+
+- name: Launch Mission
+  do:
+  - click: "#btnStartBriefing"
+  - pause: 25

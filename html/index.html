@@ -80,12 +80,14 @@
     <canvas id="gameCanvas"></canvas>
 
     <div class="hud hud-top">
-        <div>SCORE: <span id="scoreDisplay">000000</span></div>
-        <div class="text-center retro-text">GIT HISTORY ARCADE</div>
         <div class="flex gap-6">
+            <div>SCORE: <span id="scoreDisplay">000000</span></div>
             <div>PLAYERS: <span id="playersDisplay">0</span></div>
+            <div>TRACKS: <span id="tracksDisplay">0</span></div>
             <div>COMMITS: <span id="commitsDisplay">0</span></div>
         </div>
+        <div class="text-center retro-text">GIT HISTORY ARCADE</div>
+        <div></div>
     </div>
 
     <div class="hud hud-bottom flex flex-col gap-4">
@@ -115,14 +117,18 @@
             <h2 class="text-3xl text-center retro-text font-bold mb-4 tracking-wider" style="font-family: 'Press Start 2P', cursive; text-shadow: 0 0 10px #f0f;">MISSION BRIEFING</h2>
             <div id="briefingRepoName" class="text-xl text-[#0ff] text-center mb-6 font-bold uppercase border-b-2 border-dashed border-[#0ff]/40 pb-2">REPO: </div>
             
-            <div class="grid grid-cols-2 gap-4 text-lg mb-6">
+            <div class="grid grid-cols-3 gap-4 text-lg mb-6">
                 <div class="bg-cyan-950/30 border border-[#0ff]/30 p-3 rounded flex flex-col items-center">
-                    <span class="text-gray-400 text-sm">TOTAL COMMITS</span>
-                    <span id="briefingCommits" class="text-[#0ff] text-3xl font-extrabold tracking-widest mt-1">0</span>
+                    <span class="text-gray-400 text-[10px] uppercase">COMMITS</span>
+                    <span id="briefingCommits" class="text-[#0ff] text-2xl font-extrabold tracking-widest mt-1">0</span>
                 </div>
                 <div class="bg-cyan-950/30 border border-[#0ff]/30 p-3 rounded flex flex-col items-center">
-                    <span class="text-gray-400 text-sm">ACTIVE COMMITTERS</span>
-                    <span id="briefingPlayers" class="text-[#0ff] text-3xl font-extrabold tracking-widest mt-1">0</span>
+                    <span class="text-gray-400 text-[10px] uppercase">PLAYERS</span>
+                    <span id="briefingPlayers" class="text-[#0ff] text-2xl font-extrabold tracking-widest mt-1">0</span>
+                </div>
+                <div class="bg-cyan-950/30 border border-[#0ff]/30 p-3 rounded flex flex-col items-center">
+                    <span class="text-gray-400 text-[10px] uppercase">TRACKS</span>
+                    <span id="briefingTracks" class="text-[#0ff] text-2xl font-extrabold tracking-widest mt-1">0</span>
                 </div>
             </div>
 
@@ -142,6 +148,6 @@
         </div>
     </div>
 
-    <script src="engine.js"></script>
+    <script src="engine.js?v=3"></script>
 </body>
 </html>

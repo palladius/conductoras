@@ -123,7 +123,19 @@ class GitHistoryParser:
         # Post-process: try to infer branches better if they don't have refs
         # Git doesn't store branches in commits, so we might need to propagate known branches backwards
         # For our arcade, we just need *some* branch tag to spawn a ship
-        
+        for commit in timeline:
+            track = None
+            track_display = None
+            for f in commit.get("files", []):
+                match = re.match(r"^conductor/tracks/([^/]+)/", f["name"])
+                if match:
+                    track = match.group(1)
+                    clean_name = re.sub(r'_\d{8}$', '', track)
+                    track_display = clean_name.replace('_', ' ').title()
+                    break
+            commit["track"] = track
+            commit["track_display"] = track_display
+            
         return timeline
 
     def export_to_file(self, output_path="timeline.json"):

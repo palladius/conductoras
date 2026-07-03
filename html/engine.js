@@ -20,6 +20,7 @@ let lastFrameTime = 0;
 let score = 0;
 let totalCommits = 0;
 let activePlayers = new Set();
+let activeTracks = new Set();
 
 // Entities
 let stars = [];
@@ -88,9 +89,13 @@ function initStars() {
 }
 
 function preScanTimeline(timelineData) {
-    const playersMap = new Map(); // email -> { name, email, avatarUrl, color, is_conductor, branches: Set }
+    const playersMap = new Map(); // email -> { name, email, avatarUrl, color, is_conductor, track, branches: Set }
+    const tracksSet = new Set();
     
     timelineData.forEach(event => {
+        if (event.track) {
+            tracksSet.add(event.track);
+        }
         if (event.email) {
             if (!playersMap.has(event.email)) {
                 const color = SHIP_COLORS[playersMap.size % SHIP_COLORS.length];
@@ -100,6 +105,7 @@ function preScanTimeline(timelineData) {
                     avatarUrl: event.avatarUrl,
                     color: color,
                     is_conductor: false,
+                    track: null,
                     branches: new Set()
                 });
             }
@@ -108,21 +114,26 @@ function preScanTimeline(timelineData) {
             if (event.is_conductor) {
                 player.is_conductor = true;
             }
+            if (event.track) {
+                player.track = event.track_display || event.track;
+            }
         }
     });
 
     return {
-        players: Array.from(playersMap.values())
+        players: Array.from(playersMap.values()),
+        totalTracksCount: tracksSet.size
     };
 }
 
-function showBriefing(players, repoName, totalCommitsCount) {
+function showBriefing(players, repoName, totalCommitsCount, totalTracksCount) {
     const overlay = document.getElementById('briefingOverlay');
     if (!overlay) return;
 
     document.getElementById('briefingRepoName').innerText = `REPO: ${repoName}`;
     document.getElementById('briefingCommits').innerText = totalCommitsCount.toLocaleString();
     document.getElementById('briefingPlayers').innerText = players.length;
+    document.getElementById('briefingTracks').innerText = totalTracksCount || 0;
 
     const fleetList = document.getElementById('briefingFleetList');
     fleetList.innerHTML = '';
@@ -148,8 +159,6 @@ function showBriefing(players, repoName, totalCommitsCount) {
             `;
         }
 
-        const primaryBranchName = Array.from(player.branches)[0] || 'main';
-
         const row = document.createElement('div');
         row.className = "flex items-center justify-between bg-gray-900/60 border border-gray-800 p-3 rounded-lg hover:border-[#0ff]/40 transition-all duration-200";
         row.innerHTML = `
@@ -162,8 +171,10 @@ function showBriefing(players, repoName, totalCommitsCount) {
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right">
-                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">PRIMARY BRANCH</div>
-                    <div class="text-xs font-bold font-mono" style="color: ${player.color}">${badge} ${primaryBranchName}</div>
+                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">LATEST TRACK</div>
+                    <div class="text-xs font-bold font-mono text-[#0ff]" style="text-shadow: 0 0 3px #0ff;">
+                        ${player.track ? `${badge} ${player.track}` : 'None'}
+                    </div>
                 </div>
                 <div class="flex items-center justify-center bg-black/40 p-1.5 rounded border border-gray-800">
                     ${shipSvg}
@@ -186,6 +197,7 @@ async function loadTimeline(repoName) {
     score = 0;
     totalCommits = 0;
     activePlayers.clear();
+    activeTracks.clear();
     ships.clear();
     lasers = [];
     explosions = [];
@@ -198,6 +210,7 @@ async function loadTimeline(repoName) {
     document.getElementById('scoreDisplay').innerText = '000000';
     document.getElementById('commitsDisplay').innerText = '0';
     document.getElementById('playersDisplay').innerText = '0';
+    document.getElementById('tracksDisplay').innerText = '0';
     document.getElementById('dateDisplay').innerText = 'Loading...';
 
     try {
@@ -220,7 +233,7 @@ async function loadTimeline(repoName) {
             
             // Pre-scan to build player and ship data
             const briefingData = preScanTimeline(timeline);
-            showBriefing(briefingData.players, briefingData.branches, repoName, timeline.length);
+            showBriefing(briefingData.players, repoName, timeline.length, briefingData.totalTracksCount);
         } else {
             document.getElementById('dateDisplay').innerText = 'No commits found';
         }
@@ -300,10 +313,14 @@ function update(dt) {
         if (event.email) {
             activePlayers.add(event.email);
         }
+        if (event.track) {
+            activeTracks.add(event.track);
+        }
         
         document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
         document.getElementById('commitsDisplay').innerText = totalCommits;
         document.getElementById('playersDisplay').innerText = activePlayers.size;
+        document.getElementById('tracksDisplay').innerText = activeTracks.size;
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
@@ -332,7 +349,8 @@ function update(dt) {
                     is_conductor: event.is_conductor || false,
                     active: true,
                     name: event.author || 'Unknown',
-                    branch: event.branch
+                    branch: event.branch,
+                    track: event.track_display || event.track || null
                 });
             } else {
                 const ship = ships.get(shipKey);
@@ -340,6 +358,9 @@ function update(dt) {
                 ship.branch = event.branch;
                 if (event.is_conductor) {
                     ship.is_conductor = true;
+                }
+                if (event.track) {
+                    ship.track = event.track_display || event.track;
                 }
                 ship.active = true;
                 if (wasInactive) {
@@ -582,14 +603,33 @@ function draw() {
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.strokeStyle = ship.color;
         ctx.lineWidth = 2;
-        const text = ship.is_conductor ? `🪄 ${ship.name}` : `🌿 ${ship.name}`;
-        ctx.font = '12px "Share Tech Mono"';
-        const tw = ctx.measureText(text).width;
-        ctx.fillRect(ship.x - tw/2 - 5, ship.y - 65, tw + 10, 20);
-        ctx.strokeRect(ship.x - tw/2 - 5, ship.y - 65, tw + 10, 20);
         
+        const titleText = ship.is_conductor ? `🪄 ${ship.name}` : `🌿 ${ship.name}`;
+        const subtitleText = ship.track ? `Track: ${ship.track}` : '';
+        
+        ctx.font = '12px "Share Tech Mono"';
+        const titleWidth = ctx.measureText(titleText).width;
+        
+        ctx.font = '10px "Share Tech Mono"';
+        const subtitleWidth = subtitleText ? ctx.measureText(subtitleText).width : 0;
+        
+        const tw = Math.max(titleWidth, subtitleWidth);
+        const boxHeight = subtitleText ? 36 : 20;
+        
+        ctx.fillRect(ship.x - tw/2 - 6, ship.y - 65, tw + 12, boxHeight);
+        ctx.strokeRect(ship.x - tw/2 - 6, ship.y - 65, tw + 12, boxHeight);
+        
+        // Draw title
         ctx.fillStyle = '#fff';
-        ctx.fillText(text, ship.x - tw/2, ship.y - 51);
+        ctx.font = '12px "Share Tech Mono"';
+        ctx.fillText(titleText, ship.x - titleWidth/2, ship.y - 51);
+        
+        // Draw subtitle (track name)
+        if (subtitleText) {
+            ctx.fillStyle = '#0ff'; // neon cyan for the track
+            ctx.font = '10px "Share Tech Mono"';
+            ctx.fillText(subtitleText, ship.x - subtitleWidth/2, ship.y - 38);
+        }
     });
 
     explosions.forEach(e => {
@@ -740,6 +780,7 @@ if (btnReset) {
             score = 0;
             totalCommits = 0;
             activePlayers.clear();
+            activeTracks.clear();
             ships.clear();
             lasers = [];
             explosions = [];
@@ -747,10 +788,11 @@ if (btnReset) {
             activeBranches = 0;
             isPlaying = false;
             document.getElementById('playersDisplay').innerText = '0';
+            document.getElementById('tracksDisplay').innerText = '0';
             
             // Show briefing again
             const briefingData = preScanTimeline(timeline);
-            showBriefing(briefingData.players, briefingData.branches, currentRepoName, timeline.length);
+            showBriefing(briefingData.players, currentRepoName, timeline.length, briefingData.totalTracksCount);
         }
     };
 }

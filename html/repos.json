@@ -1,5 +1,9 @@
 [
   {
+    "name": "adk-sre-benjamin",
+    "has_conductor": true
+  },
+  {
     "name": "media-arneis",
     "has_conductor": true
   }
