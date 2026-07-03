@@ -540,22 +540,17 @@ function getTrackNodeCoords(trackName) {
     const idx = allRepoTracks.indexOf(trackName);
     if (idx === -1) return null;
     
-    // 3 columns of rectangles
-    const cols = 3;
-    const colSpacing = 220;
+    // Distribute tracks between left (even) and right (odd) columns
+    const isOnLeft = (idx % 2 === 0);
+    const colIdx = Math.floor(idx / 2);
+    
+    const startY = 160;
     const rowSpacing = 36;
     
-    const row = Math.floor(idx / cols);
-    const col = idx % cols;
+    const x = isOnLeft ? 110 : (width - 110);
+    const y = startY + colIdx * rowSpacing;
     
-    const gridWidth = (cols - 1) * colSpacing;
-    const startX = (width - gridWidth) / 2;
-    const startY = 120; // Float rectangles below HUD
-    
-    return {
-        x: startX + col * colSpacing,
-        y: startY + row * rowSpacing
-    };
+    return { x, y };
 }
 
 function drawTrackRect(x, y, w, h, text, color, isGlowing) {
