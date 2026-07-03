@@ -48,3 +48,12 @@ The vertical position of "main" starship is the position of `current_time()`. So
   - It shows general statistics: **REPO NAME**, **TOTAL COMMITS**, and **ACTIVE COMMITTERS**.
   - It displays a scrollable grid of the player fleet. Each card contains the player's avatar, name, email, primary branch, and a visual preview (using the exact color and SVG geometry) of their assigned spaceship/wand.
   - Clicking **LAUNCH MISSION** or the HUD **PLAY** button hides the briefing card and runs/resumes the timeline animation.
+
+## Conductor Tracks & Demo Recording
+
+- **Track Parsing & Formatting**: Commits that modify files under `conductor/tracks/` are automatically scanned. The parser extracts the subfolder name as the commit's `track` and generates a user-friendly version (`track_display`) by stripping trailing date suffixes (e.g., `_20260616`) and converting underscores to title-case spaces.
+- **Track Status Display**:
+  - The Mission Briefing overlay card displays the **LATEST TRACK** worked on by each committer.
+  - In the canvas simulation, when a ship is active on a track, its overhead label box dynamically expands its height to render a neon-cyan subtitle showing the track name: `Track: Disable Mock Fallback Dev`.
+- **HUD & Briefing Track Counters**: Both the top HUD bar and the initial briefing card display the count of unique Conductor **TRACKS** present in the timeline, incrementing dynamically as the simulation progresses.
+- **Demo Recording Automation**: Programmatic browser video captures of the arcade simulation are automated using `shot-scraper video storyboard.yml --mp4`.
