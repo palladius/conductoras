@@ -366,10 +366,15 @@ function update(dt) {
     if (currentIndex < timeline.length) {
         const nextTime = new Date(timeline[currentIndex].timestamp).getTime();
         const diffDays = (nextTime - currentTime) / (1000 * 60 * 60 * 24);
-        if (diffDays > 30) targetSpeed = 8.0; // Warp Speed
-        else if (diffDays > 7) targetSpeed = 4.0; // Cruise Speed
-        else if (diffDays < 1) targetSpeed = 0.5; // Bullet Time
-        else targetSpeed = 1.0;
+        if (diffDays > 14) {
+            targetSpeed = 15.0;
+        } else if (diffDays > 5) {
+            targetSpeed = 6.0;
+        } else if (diffDays > 1) {
+            targetSpeed = 1.0;
+        } else {
+            targetSpeed = 0.04;
+        }
     }
     
     // Smooth lerp for speed transitions
