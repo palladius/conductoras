@@ -27,6 +27,7 @@ let allRepoTracks = [];
 let stars = [];
 let ships = new Map(); // branchName -> { x, targetX, y, color, avatarUrl, active }
 let lasers = []; // { x, y, tx, ty, color, size, life }
+let explosions = []; // { x, y, size, life, color }
 let tagLines = []; // { y, text, life }
 let avatars = new Map(); // avatarUrl -> HTMLImageElement
 let globalTrackLifecycles = new Map(); // track -> { name, start, last, commits, isMerged, mergedAt, color }
@@ -349,9 +350,14 @@ function update(dt) {
 
     while (currentIndex < timeline.length) {
         const event = timeline[currentIndex];
-        const eventTime = new Date(event.timestamp).getTime();
         
-        if (eventTime > currentTime) break; // Not yet
+        // Only process events up to the current simulated time
+        if (new Date(event.timestamp).getTime() > currentTime) {
+            break;
+        }
+
+        const mainX = width / 2;
+        const mainY = height * 0.8;
 
         totalCommits++;
         score += (event.added + event.deleted) * 10 + (activeBranches * 100); // Massive score multiplier for complex branches!
@@ -388,9 +394,6 @@ function update(dt) {
         document.getElementById('tracksDisplay').innerText = totalTracksText;
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
-
-        const mainX = width / 2;
-        const mainY = height * 0.8;
 
         { // Everyone gets a ship! (Committers are players, not branches)
             const shipKey = event.email || event.author || 'unknown';
