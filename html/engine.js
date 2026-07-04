@@ -340,11 +340,10 @@ function update(dt) {
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
-        const isMain = event.branch === 'main' || event.branch === 'master';
         const mainX = width / 2;
         const mainY = height * 0.8;
 
-        if (!isMain) {
+        { // Everyone gets a ship! (Committers are players, not branches)
             const shipKey = event.email || event.author || 'unknown';
             if (!ships.has(shipKey)) {
                 const side = Math.random() > 0.5 ? 1 : -1;
@@ -816,6 +815,78 @@ document.getElementById('speedSlider').oninput = (e) => {
     gameSpeed = parseInt(e.target.value);
     document.getElementById('speedDisplay').innerText = gameSpeed + 'x';
 };
+
+const progressContainer = document.getElementById('progressContainer');
+if (progressContainer) {
+    progressContainer.onclick = (e) => {
+        if (!timeline || timeline.length === 0) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const targetIndex = Math.floor(percent * (timeline.length - 1));
+        
+        // Reset visual and calculation state
+        currentIndex = 0;
+        score = 0;
+        totalCommits = 0;
+        activePlayers.clear();
+        activeTracks.clear();
+        ships.clear();
+        lasers = [];
+        explosions = [];
+        tractorBeams = [];
+        activeBranches = 0;
+        
+        // Fast forward state mathematically
+        while (currentIndex < targetIndex) {
+            const event = timeline[currentIndex];
+            totalCommits++;
+            const activeB = Array.from(ships.values()).filter(s => s.active).length;
+            score += (event.added + event.deleted) * 10 + (activeB * 100);
+            if (event.email) activePlayers.add(event.email);
+            if (event.track) activeTracks.add(event.track);
+            
+            const shipKey = event.email || event.author || 'unknown';
+            if (!ships.has(shipKey)) {
+                ships.set(shipKey, {
+                    active: true,
+                    name: event.author || 'Unknown',
+                    branch: event.branch,
+                    track: event.track_display || event.track || null,
+                    is_conductor: event.is_conductor || false,
+                    color: SHIP_COLORS[ships.size % SHIP_COLORS.length],
+                    avatarUrl: event.avatarUrl,
+                    x: width/2 + (Math.random()>0.5?1:-1) * (100+Math.random()*200),
+                    targetX: width/2 + (Math.random()>0.5?1:-1) * (150+Math.random()*150),
+                    y: height * 0.2 + Math.random() * (height * 0.4)
+                });
+            } else {
+                const ship = ships.get(shipKey);
+                ship.active = true;
+                ship.branch = event.branch;
+                if (event.is_conductor) ship.is_conductor = true;
+                if (event.track) ship.track = event.track_display || event.track;
+            }
+            
+            if (event.is_merge) {
+                ships.get(shipKey).active = false;
+            }
+            currentIndex++;
+        }
+        
+        if (currentIndex < timeline.length) {
+            currentTime = new Date(timeline[currentIndex].timestamp).getTime();
+            document.getElementById('dateDisplay').innerText = timeline[currentIndex].timestamp.split('T')[0];
+        }
+        
+        // Force UI updates immediately
+        document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
+        document.getElementById('commitsDisplay').innerText = totalCommits;
+        document.getElementById('playersDisplay').innerText = activePlayers.size;
+        const totalTracksText = allRepoTracks.length ? `${activeTracks.size} / ${allRepoTracks.length}` : activeTracks.size;
+        document.getElementById('tracksDisplay').innerText = totalTracksText;
+        document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
+    };
+}
 
 async function initRepos() {
     let repos = [];
