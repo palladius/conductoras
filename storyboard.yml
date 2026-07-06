@@ -1,5 +1,5 @@
 output: demo.webm
-url: http://localhost:8000/?repo=adk-sre-benjamin
+url: http://localhost:8000/?repo=adk-sre-benjamin&skip_briefing=true
 
 viewport:
   width: 1280
@@ -13,11 +13,6 @@ cursor:
   click_size: 44
 
 scenes:
-- name: Mission Briefing
-  do:
-  - pause: 6
-
 - name: Launch Mission
   do:
-  - click: "#btnStartBriefing"
-  - pause: 25
+  - pause: 30

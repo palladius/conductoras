@@ -310,12 +310,20 @@ async function loadTimeline(repoName) {
         if (timeline && timeline.length > 0) {
             currentTime = new Date(timeline[0].timestamp).getTime();
             document.getElementById('dateDisplay').innerText = timeline[0].timestamp.split('T')[0];
-            isPlaying = false; // Do NOT auto-play
+            const urlParams = new URLSearchParams(window.location.search);
+            const skipBriefing = urlParams.get('skip_briefing') === 'true';
             
             // Pre-scan to build player and ship data
             const briefingData = preScanTimeline(timeline);
             tracksLifespans = briefingData.tracksLifespans;
-            showBriefing(briefingData.players, repoName, timeline.length, allRepoTracks.length || briefingData.totalTracksCount);
+            
+            if (skipBriefing) {
+                document.getElementById('briefingOverlay').classList.add('hidden');
+                isPlaying = true;
+            } else {
+                isPlaying = false;
+                showBriefing(briefingData.players, repoName, timeline.length, allRepoTracks.length || briefingData.totalTracksCount);
+            }
         } else {
             document.getElementById('dateDisplay').innerText = 'No commits found';
         }
@@ -354,6 +362,25 @@ function spawnExplosion(x, y, color) {
             vx: (Math.random() - 0.5) * 10,
             vy: (Math.random() - 0.5) * 10,
             size: 2 + Math.random() * 4,
+            life: 1.0,
+            color: color
+        });
+    }
+}
+
+function spawnWarpIn(x, y, color) {
+    for(let i=0; i<40; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 50 + Math.random() * 80;
+        explosions.push({
+            x: x + Math.cos(angle) * radius,
+            y: y + Math.sin(angle) * radius,
+            vx: 0,
+            vy: 0,
+            targetX: x,
+            targetY: y,
+            isWarp: true,
+            size: 1 + Math.random() * 3,
             life: 1.0,
             color: color
         });
@@ -445,6 +472,7 @@ function update(dt) {
                     rawTrackName: event.track,
                     lastAuthor: event.author || 'Unknown'
                 });
+                spawnWarpIn(ships.get(shipKey).x, ships.get(shipKey).y, color);
             } else {
                 const ship = ships.get(shipKey);
                 const wasInactive = !ship.active;
@@ -460,6 +488,7 @@ function update(dt) {
                     ship.x = mainX + side * (100 + Math.random() * 200);
                     ship.targetX = mainX + side * (150 + Math.random() * 150);
                     ship.y = height * 0.2 + Math.random() * (height * 0.4);
+                    spawnWarpIn(ship.x, ship.y, ship.color);
                 }
             }
 
@@ -470,12 +499,17 @@ function update(dt) {
                 ship.y += 100; // dive
                 
                 const googleColors = ['#4285F4', '#EA4335', '#FBBC05', '#34A853'];
+                const beamColor = googleColors[Math.floor(Math.random() * googleColors.length)];
                 tractorBeams.push({
                     x: ship.x, y: ship.y,
                     tx: mainX, ty: mainY - 30, // shoot from top of mothership
-                    color: googleColors[Math.floor(Math.random() * googleColors.length)],
+                    color: beamColor,
                     life: 1.0
                 });
+                
+                spawnExplosion(ship.x, ship.y, ship.color);
+                spawnExplosion(mainX, mainY - 30, beamColor);
+                
                 ship.active = false;
             } else {
                 if (event.added > 0) spawnLaser(ship.x, ship.y, mainX, mainY - 30, 'add', event.added);
@@ -529,9 +563,17 @@ function update(dt) {
     // Update explosions
     for (let i = explosions.length - 1; i >= 0; i--) {
         let e = explosions[i];
-        e.x += e.vx;
-        e.y += e.vy;
-        e.life -= 0.05;
+        if (e.isWarp) {
+            const dx = e.targetX - e.x;
+            const dy = e.targetY - e.y;
+            e.x += dx * 0.15;
+            e.y += dy * 0.15;
+            e.life -= 0.03;
+        } else {
+            e.x += e.vx;
+            e.y += e.vy;
+            e.life -= 0.05;
+        }
         if (e.life <= 0) explosions.splice(i, 1);
     }
 
