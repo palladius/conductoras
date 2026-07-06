@@ -56,8 +56,12 @@ The vertical position of "main" starship is the position of `current_time()`. So
   - The Mission Briefing overlay card displays the **LATEST TRACK** worked on by each committer.
   - On the game canvas, tracks are visualized as retro-style text rectangles placed in vertical columns down the left and right margins of the screen to prevent overlaps with the spaceships flying in the center.
   - **GHI & GitHub Integration**: Track display names are automatically prefixed with their GitHub Issue number (e.g., `#28 Pending Mutations Registry`) parsed from `metadata.json`. Active track boxes can be hovered over (changing the mouse cursor to a pointer) and clicked to open the track's permalink to the GitHub issue in a new browser tab.
-  - **Dynamic Lifespan & Pacing**: A track box and its helper ship appear on the canvas only when commits are actively being worked on. They spawn upon receiving a commit, and automatically disappear (de-spawn) 2 days of simulated timeline time after their latest commit, ensuring the margins and central space fields remain clean and uncluttered.
+  - **Dynamic Lifespan & Pacing (Birth/Merge Particles)**:
+    - **BIRTH**: When a track spaceship is first created or wakes up from inactive state, it displays a spectacular cyan/colored warp portal implosion animation as it warps in.
+    - **MERGE**: When a branch is successfully merged, both the track ship and the mothership payload center trigger large colored explosions.
+    - A track box and its helper ship automatically disappear (de-spawn) 2 days of simulated timeline time after their latest commit.
   - While a track is active (within its 2-day activity window), its spaceship fires a pulsing, neon-cyan laser link directly connecting the ship to the track rectangle.
   - Rectangles are color-coded: neon-green (`#0f0`) for completed tracks (after their active window expires, though they are hidden), pulsing neon-yellow (`#ff0`) for currently active targets, and unstarted/expired tracks are invisible.
+  - **Skip Briefing Option**: You can bypass the onboarding briefing overlay card and start playing/recording immediately by adding `skip_briefing=true` in the URL query parameter (e.g., `http://localhost:8000/?repo=adk-sre-benjamin&skip_briefing=true`).
 - **HUD & Briefing Track Counters**: Both the top HUD bar and the initial briefing card display the count of unique Conductor **TRACKS** present in the timeline, incrementing dynamically as the simulation progresses.
 - **Demo Recording Automation**: Programmatic browser video captures of the arcade simulation are automated using `shot-scraper video storyboard.yml --mp4`.
