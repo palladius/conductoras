@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git History Timeline - Parallax view</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap');
+        
+        body {
+            margin: 0;
+            background-color: #020208;
+            color: #0ff;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+
+        /* Parallax Background */
+        .stars-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 40px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 50px 160px, #0ff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 80px 120px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            transform: translateZ(-2px) scale(2);
+            z-index: -3;
+            opacity: 0.3;
+        }
+
+        .nebula-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 100, 200, 0.08), rgba(200, 0, 100, 0.03), transparent 70%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Glowing vertical axis */
+        .timeline-axis {
+            position: absolute;
+            left: 50%;
+            top: 100px;
+            bottom: 100px;
+            width: 4px;
+            background: linear-gradient(to bottom, #00f, #0ff, #0f0, #ff0, #f00);
+            box-shadow: 0 0 15px #0ff, 0 0 5px #00f;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        /* Glassmorphic glowing cards */
+        .timeline-card {
+            position: relative;
+            width: 42%;
+            margin: 40px 0;
+            padding: 20px;
+            background: rgba(5, 5, 20, 0.85);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(50px) scale(0.9);
+            z-index: 2;
+        }
+
+        .timeline-card.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            border-color: rgba(0, 255, 255, 0.6);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.15), inset 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+
+        .timeline-card.left {
+            left: 4%;
+            text-align: right;
+        }
+
+        .timeline-card.right {
+            left: 54%;
+            text-align: left;
+        }
+
+        .timeline-card::after {
+            content: '';
+            position: absolute;
+            top: 30px;
+            width: 16px;
+            height: 16px;
+            background: #020208;
+            border: 3px solid #0ff;
+            box-shadow: 0 0 10px #0ff;
+            border-radius: 50%;
+            z-index: 3;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-card.left::after {
+            right: -10.5%;
+        }
+
+        .timeline-card.right::after {
+            left: -10.5%;
+        }
+
+        .timeline-card.visible::after {
+            background: #0ff;
+            box-shadow: 0 0 20px #0ff, 0 0 5px #fff;
+            transform: scale(1.2);
+        }
+
+        .hud-nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 10, 30, 0.9);
+            border: 2px solid #0ff;
+            box-shadow: 0 0 15px #0ff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 11px;
+            letter-spacing: 1px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .nav-btn.active {
+            background: #0ff;
+            color: #000;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        /* Milestones step track styling */
+        .milestone-track {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+            border-left: 2px dashed rgba(0, 255, 255, 0.2);
+            padding-left: 15px;
+        }
+        
+        .timeline-card.left .milestone-track {
+            border-left: none;
+            border-right: 2px dashed rgba(0, 255, 255, 0.2);
+            padding-left: 0;
+            padding-right: 15px;
+        }
+
+        .milestone-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .timeline-card.left .milestone-step {
+            justify-content: flex-end;
+        }
+
+        .milestone-step.active {
+            color: #0ff;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+
+        .milestone-step.completed {
+            color: #0f0;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            background: #0ff;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="stars-bg"></div>
+    <div class="nebula-bg"></div>
+
+    <!-- HUD Navigation -->
+    <div class="hud-nav">
+        <button onclick="goToArcade()" class="nav-btn">🕹️ SPACE ARCADE</button>
+        <button class="nav-btn active">📊 PARALLAX TIMELINE</button>
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="fixed bottom-6 left-6 right-6 bg-slate-950/95 border border-cyan-500/50 p-4 rounded-xl shadow-2xl z-50 flex items-center justify-between pointer-events-auto">
+        <div class="flex items-center gap-4">
+            <button id="btnPlay" class="px-5 py-2 bg-cyan-500 text-black font-bold rounded-lg shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 transition" onclick="togglePlay()">
+                PLAY AUTO-SCROLL
+            </button>
+            <button id="btnReset" class="px-4 py-2 border border-cyan-500 text-cyan-500 font-semibold rounded-lg hover:bg-cyan-500/10 transition" onclick="resetScroll()">
+                RESET
+            </button>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-xs text-cyan-400">AUTO-SPEED WARP:</span>
+            <input type="range" id="speedSlider" min="1" max="100" value="15" class="w-40 accent-cyan-500">
+            <span id="speedValue" class="text-xs text-white font-mono w-8">15x</span>
+        </div>
+        <div class="text-right">
+            <span id="activeDate" class="text-lg font-bold text-white font-mono block">2026-05-29</span>
+            <span id="currentStatus" class="text-[10px] text-cyan-400 tracking-wider font-mono">STANDBY</span>
+        </div>
+    </div>
+
+    <!-- Scroll timeline container -->
+    <div class="relative w-full max-w-5xl mx-auto pt-32 pb-48">
+        <div class="timeline-axis"></div>
+        <div id="timelineContainer" class="relative w-full min-h-[200vh]">
+            <!-- Dynamic cards inject here -->
+        </div>
+    </div>
+
+    <script>
+        let milestones = [];
+        let isPlaying = false;
+        let animationFrameId = null;
+        let lastTime = 0;
+        let currentScrollY = window.scrollY;
+        let repoName = 'adk-sre-benjamin';
+
+        // Parse query params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('repo')) {
+            repoName = urlParams.get('repo');
+        }
+
+        function goToArcade() {
+            window.location.href = `index.html?repo=${repoName}`;
+        }
+
+        async function init() {
+            try {
+                const res = await fetch(`${repoName}/milestones.json`);
+                milestones = await res.json();
+                renderTimeline();
+                setupParallaxEffect();
+                setupIntersectionObserver();
+            } catch(e) {
+                console.error("Failed to load milestones.json", e);
+                document.getElementById('timelineContainer').innerHTML = `
+                    <div class="text-center text-red-500 py-20 text-lg">
+                        Error loading timeline milestones. Make sure static assets are built.
+                    </div>`;
+            }
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '';
+            
+            milestones.forEach((item, index) => {
+                const isLeft = (index % 2 === 0);
+                const card = document.createElement('div');
+                card.className = `timeline-card ${isLeft ? 'left' : 'right'}`;
+                card.dataset.date = item.creation.split('T')[0];
+                
+                const c_str = item.creation.split('T')[0];
+                const s_str = item.impl_start.split('T')[0];
+                const e_str = item.impl_end.split('T')[0];
+                const m_str = item.merge.split('T')[0];
+
+                const issueHeader = item.ghi !== 'N/A' 
+                    ? `<span class="bg-cyan-500/20 text-cyan-400 text-xs px-2 py-0.5 rounded border border-cyan-500/40 font-bold mr-2">#${item.ghi}</span>`
+                    : '';
+
+                const gitLink = item.ghi !== 'N/A'
+                    ? `<a href="https://github.com/palladius/adk-sre-benjamin/issues/${item.ghi}" target="_blank" class="text-[10px] text-cyan-400 hover:underline block mt-2">🔗 View GitHub Issue</a>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] text-cyan-500 font-mono tracking-wider">${c_str}</span>
+                        ${issueHeader}
+                    </div>
+                    <h3 class="text-md font-bold text-white mb-2 font-mono">${item.display_name}</h3>
+                    
+                    <div class="milestone-track">
+                        <div class="milestone-step completed">
+                            <span>📝</span>
+                            <span>Spec Initialized (${c_str})</span>
+                        </div>
+                        ${s_str !== c_str ? `
+                        <div class="milestone-step active">
+                            <span>🛠️</span>
+                            <span>Code Start (${s_str})</span>
+                        </div>` : ''}
+                        ${e_str !== s_str ? `
+                        <div class="milestone-step">
+                            <span>✅</span>
+                            <span>Code Complete (${e_str})</span>
+                        </div>` : ''}
+                        <div class="milestone-step">
+                            <span>🔀</span>
+                            <span>Merged to Main (${m_str})</span>
+                        </div>
+                    </div>
+                    ${gitLink}
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            // Adjust timeline height dynamically based on cards count
+            container.style.minHeight = `${milestones.length * 280 + 300}px`;
+        }
+
+        function setupIntersectionObserver() {
+            const cards = document.querySelectorAll('.timeline-card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        triggerCardParticles(entry.target);
+                    } else {
+                        entry.target.classList.remove('visible');
+                    }
+                });
+            }, {
+                threshold: 0.15,
+                rootMargin: '0px 0px -100px 0px'
+            });
+
+            cards.forEach(card => observer.observe(card));
+        }
+
+        function triggerCardParticles(card) {
+            const rect = card.getBoundingClientRect();
+            for(let i=0; i<8; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = `${Math.random() * rect.width}px`;
+                p.style.top = `${Math.random() * rect.height}px`;
+                p.style.width = `${2 + Math.random() * 4}px`;
+                p.style.height = p.style.width;
+                card.appendChild(p);
+                
+                setTimeout(() => p.remove(), 1000);
+            }
+        }
+
+        function setupParallaxEffect() {
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                // Move bg stars slower
+                document.querySelector('.stars-bg').style.transform = `translateY(${scrolled * 0.15}px) translateZ(-2px) scale(2)`;
+                
+                // Active date header updates based on center viewport element
+                const cards = document.querySelectorAll('.timeline-card');
+                let closestCard = null;
+                let closestDist = Infinity;
+                
+                cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const dist = Math.abs(rect.top - window.innerHeight / 2);
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closestCard = card;
+                    }
+                });
+                
+                if (closestCard) {
+                    document.getElementById('activeDate').innerText = closestCard.dataset.date;
+                }
+            });
+        }
+
+        // Auto-Scroll loop with auto-speed warping
+        function autoScrollLoop(timestamp) {
+            if (!isPlaying) return;
+
+            const sliderVal = parseInt(document.getElementById('speedSlider').value);
+            document.getElementById('speedValue').innerText = `${sliderVal}x`;
+
+            // Calculate local density to dynamically warp or slow speed
+            const viewportCenter = window.scrollY + window.innerHeight / 2;
+            const cards = document.querySelectorAll('.timeline-card');
+            
+            let minDistance = Infinity;
+            cards.forEach(card => {
+                const cardCenter = card.offsetTop + card.offsetHeight / 2;
+                const dist = Math.abs(cardCenter - viewportCenter);
+                minDistance = Math.min(minDistance, dist);
+            });
+
+            // Auto-speed warping: warp through gaps, crawl near cards
+            let speedMultiplier = 1.0;
+            if (minDistance > 500) {
+                speedMultiplier = 3.0; // Warp Speed in gaps
+                document.getElementById('currentStatus').innerText = 'HYPER WARP';
+                document.getElementById('currentStatus').style.color = '#ff0';
+            } else if (minDistance < 150) {
+                speedMultiplier = 0.25; // Bullet Time near milestones
+                document.getElementById('currentStatus').innerText = 'BULLET TIME';
+                document.getElementById('currentStatus').style.color = '#0ff';
+            } else {
+                document.getElementById('currentStatus').innerText = 'CRUISE SPEED';
+                document.getElementById('currentStatus').style.color = '#0f0';
+            }
+
+            const step = sliderVal * speedMultiplier * 0.15;
+            window.scrollBy(0, step);
+
+            // Reached end? Stop play
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 5) {
+                isPlaying = false;
+                document.getElementById('btnPlay').innerText = 'PLAY AUTO-SCROLL';
+                document.getElementById('currentStatus').innerText = 'COMPLETE';
+                document.getElementById('currentStatus').style.color = '#0f0';
+                return;
+            }
+
+            animationFrameId = requestAnimationFrame(autoScrollLoop);
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('btnPlay');
+            if (isPlaying) {
+                btn.innerText = 'PAUSE AUTO-SCROLL';
+                btn.classList.replace('bg-cyan-500', 'bg-red-500');
+                btn.classList.replace('hover:bg-cyan-400', 'hover:bg-red-400');
+                animationFrameId = requestAnimationFrame(autoScrollLoop);
+            } else {
+                btn.innerText = 'PLAY AUTO-SCROLL';
+                btn.classList.replace('bg-red-500', 'bg-cyan-500');
+                btn.classList.replace('hover:bg-red-400', 'hover:bg-cyan-400');
+                cancelAnimationFrame(animationFrameId);
+                document.getElementById('currentStatus').innerText = 'PAUSED';
+                document.getElementById('currentStatus').style.color = '#ff0';
+            }
+        }
+
+        function resetScroll() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (isPlaying) togglePlay();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

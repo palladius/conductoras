@@ -1076,6 +1076,10 @@ async function initRepos() {
     }
 }
 
+function goToTimeline() {
+    window.location.href = `timeline.html?repo=${currentRepoName || 'adk-sre-benjamin'}`;
+}
+
 initStars();
 initRepos();
 requestAnimationFrame(loop);

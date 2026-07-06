@@ -3,10 +3,153 @@ import os
 import sys
 import json
 import argparse
+import subprocess
 
 # Ensure git_arcade_parser can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from git_arcade_parser import GitHistoryParser
+
+def generate_milestones_json(repo_path, output_dir):
+    # Scan conductor/tracks/ to load metadata
+    metadata = {}
+    tracks_dir = os.path.join(repo_path, "conductor", "tracks")
+    if os.path.exists(tracks_dir):
+        for t_name in os.listdir(tracks_dir):
+            t_path = os.path.join(tracks_dir, t_name)
+            if os.path.isdir(t_path):
+                meta_file = os.path.join(t_path, "metadata.json")
+                if os.path.exists(meta_file):
+                    try:
+                        with open(meta_file, 'r') as f:
+                            metadata[t_name] = json.load(f)
+                    except:
+                        pass
+
+    # Run git log
+    cmd = ["git", "log", "--all", "--reverse", "--name-only", "--format=COMMIT|%H|%cI|%an|%s"]
+    try:
+        res = subprocess.run(cmd, cwd=repo_path, check=True, capture_output=True, text=True)
+        lines = res.stdout.split('\n')
+    except Exception as e:
+        print("Failed to run git log for milestones:", e)
+        return
+
+    commits = []
+    current_commit = None
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("COMMIT|"):
+            if current_commit:
+                commits.append(current_commit)
+            parts = line.split("|")
+            current_commit = {
+                "sha": parts[1],
+                "date": parts[2],
+                "author": parts[3],
+                "message": parts[4],
+                "files": []
+            }
+        elif current_commit:
+            current_commit["files"].append(line)
+    if current_commit:
+        commits.append(current_commit)
+
+    tracks_info = {}
+    for commit in commits:
+        sha = commit["sha"]
+        date = commit["date"]
+        msg = commit["message"]
+        
+        touched_tracks = set()
+        has_impl_changes = False
+        
+        for f in commit["files"]:
+            parts = f.split('/')
+            if len(parts) >= 3 and parts[0] == 'conductor' and parts[1] == 'tracks':
+                touched_tracks.add(parts[2])
+            else:
+                has_impl_changes = True
+
+        for track_id in metadata:
+            clean_id = track_id.lower()
+            if clean_id in msg.lower() or clean_id.replace('_', '-') in msg.lower():
+                touched_tracks.add(track_id)
+            for f in commit["files"]:
+                if clean_id in f.lower():
+                    touched_tracks.add(track_id)
+
+        for t in touched_tracks:
+            if t not in tracks_info:
+                display_name = t
+                ghi = "N/A"
+                if t in metadata:
+                    meta = metadata[t]
+                    desc = meta.get("description", t)
+                    display_name = desc[:45] + "..." if len(desc) > 45 else desc
+                    if "github_issue" in meta and isinstance(meta["github_issue"], dict):
+                        ghi = str(meta["github_issue"].get("number", "N/A"))
+                    elif "github_issue_url" in meta:
+                        p = meta["github_issue_url"].rstrip('/').split('/')
+                        if p[-1].isdigit():
+                            ghi = p[-1]
+                
+                tracks_info[t] = {
+                    "id": t,
+                    "display_name": display_name,
+                    "ghi": ghi,
+                    "creation": None,
+                    "impl_start": None,
+                    "impl_end": None,
+                    "merge": None,
+                    "all_commits": []
+                }
+            
+            t_info = tracks_info[t]
+            t_info["all_commits"].append(commit)
+
+            if not t_info["creation"]:
+                t_info["creation"] = date
+                
+            if has_impl_changes:
+                if not t_info["impl_start"]:
+                    t_info["impl_start"] = date
+                t_info["impl_end"] = date
+
+            if "merge" in msg.lower() and (t.lower() in msg.lower() or any(t.lower() in f.lower() for f in commit["files"])):
+                t_info["merge"] = date
+
+    for t, info in list(tracks_info.items()):
+        if not info["impl_start"]:
+            info["impl_start"] = info["creation"]
+        if not info["impl_end"]:
+            info["impl_end"] = info["impl_start"]
+        if not info["merge"]:
+            if info["all_commits"]:
+                info["merge"] = info["all_commits"][-1]["date"]
+
+    valid_tracks = {}
+    for t, info in tracks_info.items():
+        if t in metadata or t.replace('_', '-') in metadata or t.replace('-', '_') in metadata:
+            valid_tracks[t] = info
+
+    output_data = []
+    for t, info in sorted(valid_tracks.items(), key=lambda x: x[1]["creation"]):
+        output_data.append({
+            "id": info["id"],
+            "display_name": info["display_name"],
+            "ghi": info["ghi"],
+            "creation": info["creation"],
+            "impl_start": info["impl_start"],
+            "impl_end": info["impl_end"],
+            "merge": info["merge"]
+        })
+
+    milestones_file = os.path.join(output_dir, "milestones.json")
+    with open(milestones_file, "w") as f:
+        json.dump(output_data, f, indent=2)
+    print(f"Saved {len(output_data)} track milestones to {milestones_file}")
 
 def main():
     parser = argparse.ArgumentParser(description="Static Builder for Git History Arcade")
@@ -46,6 +189,9 @@ def main():
     with open(tracks_file, "w") as f:
         json.dump(tracks, f, indent=2)
     print(f"Saved {len(tracks)} tracks to {tracks_file}")
+
+    # Generate milestones.json
+    generate_milestones_json(repo_path, output_dir)
     
     # Update repos.json
     repos_json_path = os.path.join(html_dir, "repos.json")
