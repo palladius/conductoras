@@ -67,6 +67,7 @@ let activePlayers = new Set();
 let activeTracks = new Set();
 let allRepoTracks = [];
 let tracksLifespans = new Map();
+let lastCommitTime = new Map();
 
 // Entities
 let stars = [];
@@ -263,6 +264,7 @@ async function loadTimeline(repoName) {
     totalCommits = 0;
     activePlayers.clear();
     activeTracks.clear();
+    lastCommitTime.clear();
     allRepoTracks = [];
     ships.clear();
     lasers = [];
@@ -400,6 +402,7 @@ function update(dt) {
         }
         if (event.track) {
             activeTracks.add(event.track);
+            lastCommitTime.set(event.track, eventTime);
         }
         
         document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
@@ -493,10 +496,15 @@ function update(dt) {
     });
 
     // Update ships
-    ships.forEach((ship, branch) => {
-        if (ship.active) {
+    const shipActivityWindow = 2 * 24 * 60 * 60 * 1000; // 2 days
+    ships.forEach((ship, trackName) => {
+        const lastTime = lastCommitTime.get(trackName);
+        if (lastTime && (currentTime - lastTime <= shipActivityWindow)) {
+            ship.active = true;
             ship.x += (ship.targetX - ship.x) * 0.05;
             ship.y += Math.sin(Date.now() / 500) * 0.5;
+        } else {
+            ship.active = false;
         }
     });
 
@@ -601,12 +609,14 @@ function drawTrackNodes() {
         }
     });
 
+    const activityWindow = 2 * 24 * 60 * 60 * 1000; // 2 days
     allRepoTracks.forEach((track, idx) => {
-        // Lifespan check: only render when the track exists in the timeline's active range
-        const info = tracksLifespans.get(track);
-        if (!info || currentTime < info.firstTime || currentTime > info.lastTime) {
+        const lastTime = lastCommitTime.get(track);
+        if (!lastTime || (currentTime - lastTime > activityWindow)) {
             return;
         }
+        const info = tracksLifespans.get(track);
+        if (!info) return;
 
         const coords = getTrackNodeCoords(track);
         if (!coords) return;
@@ -978,6 +988,7 @@ if (btnReset) {
             totalCommits = 0;
             activePlayers.clear();
             activeTracks.clear();
+            lastCommitTime.clear();
             ships.clear();
             lasers = [];
             explosions = [];
