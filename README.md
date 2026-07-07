@@ -3,6 +3,10 @@
   <img src="images/logo.jpg" alt="Conductoras Logo" width="600">
 </p>
 
+<p align="center">
+  <video src="assets/demo-videos/demo_two_pass_merge.mp4" autoplay loop muted playsinline width="100%"></video>
+</p>
+
 # Conductoras
 
 Conductor at Scale (conductoras) is a framework to observe N git repos at once in a single computer.
