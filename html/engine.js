@@ -825,7 +825,8 @@ function update(dt) {
                     }
                     return true;
                 })
-                .sort((a, b) => b.start - a.start);
+                .sort((a, b) => b.start - a.start)
+                .slice(0, 5);
                 
             activeLcs.forEach(lc => {
                 const isMerged = currentTime >= lc.mergedAt;
