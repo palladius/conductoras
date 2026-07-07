@@ -763,11 +763,11 @@ function update(dt) {
         const isActiveTime = lastTime && (currentTime - lastTime <= shipActivityWindow);
         
         if (isActiveTime) {
-            ship.opacity = Math.min(1.0, (ship.opacity || 0.0) + 0.05);
+            ship.opacity = Math.min(1.0, (ship.opacity || 0.0) + dt * 2.0);
             ship.x += (ship.targetX - ship.x) * 0.05;
             ship.y += Math.sin(Date.now() / 500) * 0.5;
         } else {
-            ship.opacity = Math.max(0.0, (ship.opacity || 1.0) - 0.02);
+            ship.opacity = Math.max(0.0, (ship.opacity || 1.0) - dt * 1.0);
             // Slowly glide towards main center when active status expires
             const dx = (width / 2) - ship.x;
             const dy = (height * 0.8) - ship.y;
@@ -785,8 +785,8 @@ function update(dt) {
     spaceStations.forEach((station, tname) => {
         if (station.active) {
             if (station.merging) {
-                station.mergeAlpha -= 0.05;
-                station.size -= 0.25;
+                station.mergeAlpha -= dt * 1.0; // Fade out in exactly 1s of real time
+                station.size -= dt * 5.0;       // Shrink in exactly 1s
                 if (station.mergeAlpha <= 0 || station.size <= 0) {
                     station.active = false;
                 }
@@ -798,7 +798,7 @@ function update(dt) {
                     x: station.x, y: station.y,
                     tx: mainX, ty: mainY - 30,
                     color: station.color,
-                    life: 2.0 
+                    life: 1.0 // Expire in exactly 1 second!
                 });
                 spawnExplosion(station.x, station.y, station.color);
             } else {
@@ -886,7 +886,7 @@ function update(dt) {
     // Update Tractor Beams
     for (let i = tractorBeams.length - 1; i >= 0; i--) {
         let b = tractorBeams[i];
-        b.life -= 0.015 * (gameSpeed * dynamicSpeedMultiplier / 10);
+        b.life -= dt * 1.0;
         if (b.life <= 0) tractorBeams.splice(i, 1);
     }
 }
