@@ -141,9 +141,10 @@ function initStars() {
 
 function preScanTimeline(timelineData) {
     const playersMap = new Map(); // email -> { name, email, avatarUrl, color, is_conductor, track, branches: Set }
-    const tracksMap = new Map(); // trackName -> { firstTime, lastTime }
+    const tracksMap = new Map(); // trackName -> { firstTime, lastTime, cleanName, githubIssueUrl, issueNumber }
     globalTrackLifecycles.clear();
     
+    // Pass 1: Gather all known tracks and their issue details
     timelineData.forEach(event => {
         const eventTime = new Date(event.timestamp).getTime();
         
@@ -167,7 +168,8 @@ function preScanTimeline(timelineData) {
                     firstTime: eventTime,
                     lastTime: eventTime,
                     cleanName: displayTitle,
-                    githubIssueUrl: event.github_issue_url || null
+                    githubIssueUrl: event.github_issue_url || null,
+                    issueNumber: event.github_issue_number || null
                 });
             } else {
                 const info = tracksMap.get(event.track);
@@ -193,6 +195,9 @@ function preScanTimeline(timelineData) {
                 if (event.github_issue_url) {
                     info.githubIssueUrl = event.github_issue_url;
                 }
+                if (event.github_issue_number) {
+                    info.issueNumber = event.github_issue_number;
+                }
             }
             
             if (!globalTrackLifecycles.has(tname)) {
@@ -202,14 +207,77 @@ function preScanTimeline(timelineData) {
                     last: eventTime,
                     commits: 0,
                     isMerged: false,
+                    mergedAt: Infinity,
                     color: SHIP_COLORS[globalTrackLifecycles.size % SHIP_COLORS.length]
                 });
             }
             const t = globalTrackLifecycles.get(tname);
             t.commits++;
-            t.last = eventTime;
-            if (event.is_merge) {
-                t.isMerged = true;
+            t.last = Math.max(t.last, eventTime);
+        }
+    });
+
+    // Helper to find a track matching a merge commit message or branch
+    const findTrackForMerge = (message, branch) => {
+        if (!message && !branch) return null;
+        
+        const text = ((message || '') + ' ' + (branch || '')).toLowerCase();
+        
+        // 1. Try to find by issue number match (e.g. "issue-28", "pull request #14", etc.)
+        const numMatch = text.match(/(?:issue|#|pr)\s*[-#]?\s*(\d+)/i);
+        if (numMatch) {
+            const num = parseInt(numMatch[1]);
+            for (const [trackName, info] of tracksMap.entries()) {
+                if (info.issueNumber === num) {
+                    return trackName;
+                }
+                if (info.githubIssueUrl) {
+                    const parts = info.githubIssueUrl.split('/');
+                    const uNum = parseInt(parts[parts.length - 1]);
+                    if (uNum === num) return trackName;
+                }
+            }
+        }
+        
+        // 2. Try fuzzy string matching of names
+        for (const [trackName, info] of tracksMap.entries()) {
+            const cleanTrack = trackName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanTrackNoDate = trackName.replace(/_\d{8}$/, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            if (cleanTrack && text.includes(cleanTrack)) return trackName;
+            if (cleanTrackNoDate && text.includes(cleanTrackNoDate)) return trackName;
+        }
+        return null;
+    };
+
+    // Pass 2: Process all events (including matching merge commits to tracks) and track players
+    timelineData.forEach(event => {
+        const eventTime = new Date(event.timestamp).getTime();
+        
+        // If it is a merge commit and doesn't have a track, try to find one
+        if (event.is_merge && !event.track) {
+            const matchedTrack = findTrackForMerge(event.message, event.branch);
+            if (matchedTrack) {
+                event.track = matchedTrack;
+                const info = tracksMap.get(matchedTrack);
+                if (info) {
+                    event.track_display = info.cleanName;
+                    event.github_issue_number = info.issueNumber;
+                    event.github_issue_url = info.githubIssueUrl;
+                }
+            }
+        }
+        
+        if (event.track) {
+            const tname = event.track_display || event.track;
+            const t = globalTrackLifecycles.get(tname);
+            if (t) {
+                t.start = Math.min(t.start, eventTime);
+                t.last = Math.max(t.last, eventTime);
+                if (event.is_merge) {
+                    t.isMerged = true;
+                    t.mergedAt = Math.min(t.mergedAt, eventTime);
+                }
             }
         }
 
@@ -238,10 +306,8 @@ function preScanTimeline(timelineData) {
     });
 
     globalTrackLifecycles.forEach((t) => {
-        if (!t.isMerged) {
+        if (!t.isMerged || t.mergedAt === Infinity) {
             t.mergedAt = t.last + (7 * 24 * 60 * 60 * 1000); // 7 day heuristic
-        } else {
-            t.mergedAt = t.last;
         }
     });
 
