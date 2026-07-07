@@ -1,0 +1,23 @@
+output: timeline_demo.webm
+url: http://localhost:8000/timeline.html?repo=adk-sre-benjamin
+
+viewport:
+  width: 1280
+  height: 800
+
+cursor:
+  visible: true
+  clicks: true
+  color: "#ff4f00"
+  size: 18
+  click_size: 44
+
+scenes:
+- name: Load Timeline
+  do:
+  - pause: 3
+
+- name: Play Auto-Scroll
+  do:
+  - click: "#btnPlay"
+  - pause: 25
