@@ -77,6 +77,8 @@ let lasers = []; // { x, y, tx, ty, color, size, life }
 let explosions = []; // { x, y, size, life, color }
 let tagLines = []; // { y, text, life }
 let avatars = new Map(); // avatarUrl -> HTMLImageElement
+let globalTrackLifecycles = new Map(); // track -> { name, start, last, commits, isMerged, mergedAt, color }
+let spaceStations = new Map(); // track -> { x, y, size, active, color, lifecycle, orbitR, orbitAngle, orbitSpeed }
 
 const mainShipImage = new Image();
 let processedShipCanvas = null;
@@ -139,15 +141,19 @@ function initStars() {
 function preScanTimeline(timelineData) {
     const playersMap = new Map(); // email -> { name, email, avatarUrl, color, is_conductor, track, branches: Set }
     const tracksMap = new Map(); // trackName -> { firstTime, lastTime }
+    globalTrackLifecycles.clear();
     
     timelineData.forEach(event => {
+        const eventTime = new Date(event.timestamp).getTime();
+        
         if (event.track) {
-            const eventTime = new Date(event.timestamp).getTime();
+            const tname = event.track_display || event.track;
+            
             if (!tracksMap.has(event.track)) {
                 tracksMap.set(event.track, {
                     firstTime: eventTime,
                     lastTime: eventTime,
-                    cleanName: event.track_display || event.track,
+                    cleanName: tname,
                     githubIssueUrl: event.github_issue_url || null
                 });
             } else {
@@ -161,7 +167,25 @@ function preScanTimeline(timelineData) {
                     info.githubIssueUrl = event.github_issue_url;
                 }
             }
+            
+            if (!globalTrackLifecycles.has(tname)) {
+                globalTrackLifecycles.set(tname, {
+                    name: tname,
+                    start: eventTime,
+                    last: eventTime,
+                    commits: 0,
+                    isMerged: false,
+                    color: SHIP_COLORS[globalTrackLifecycles.size % SHIP_COLORS.length]
+                });
+            }
+            const t = globalTrackLifecycles.get(tname);
+            t.commits++;
+            t.last = eventTime;
+            if (event.is_merge) {
+                t.isMerged = true;
+            }
         }
+
         if (event.email) {
             if (!playersMap.has(event.email)) {
                 const color = SHIP_COLORS[playersMap.size % SHIP_COLORS.length];
@@ -183,6 +207,14 @@ function preScanTimeline(timelineData) {
             if (event.track) {
                 player.track = event.track_display || event.track;
             }
+        }
+    });
+
+    globalTrackLifecycles.forEach((t) => {
+        if (!t.isMerged) {
+            t.mergedAt = t.last + (7 * 24 * 60 * 60 * 1000); // 7 day heuristic
+        } else {
+            t.mergedAt = t.last;
         }
     });
 
@@ -334,6 +366,7 @@ async function loadTimeline(repoName) {
     lastCommitTime.clear();
     allRepoTracks = [];
     ships.clear();
+    spaceStations.clear();
     lasers = [];
     explosions = [];
     tagLines = [];
@@ -490,9 +523,14 @@ function update(dt) {
 
     while (currentIndex < timeline.length && commitCooldown <= 0) {
         const event = timeline[currentIndex];
-        const eventTime = new Date(event.timestamp).getTime();
         
-        if (eventTime > currentTime) break; // Not yet
+        // Only process events up to the current simulated time
+        if (new Date(event.timestamp).getTime() > currentTime) {
+            break;
+        }
+
+        const mainX = width / 2;
+        const mainY = height * 0.8;
 
         totalCommits++;
         score += (event.added + event.deleted) * 10 + (activeBranches * 100); // Massive score multiplier for complex branches!
@@ -502,6 +540,29 @@ function update(dt) {
         if (event.track) {
             activeTracks.add(event.track);
             lastCommitTime.set(event.track, eventTime);
+            
+            const tname = event.track_display || event.track;
+            if (!spaceStations.has(tname)) {
+                const lc = globalTrackLifecycles.get(tname);
+                const orbitR = 150 + Math.random() * 200;
+                const orbitAngle = Math.random() * Math.PI * 2;
+                const sx = mainX + Math.cos(orbitAngle) * orbitR;
+                const sy = mainY - 50 + Math.sin(orbitAngle) * orbitR;
+                spaceStations.set(tname, {
+                    x: sx,
+                    y: sy,
+                    size: 5,
+                    active: true,
+                    color: lc ? lc.color : COLORS.cyan,
+                    lifecycle: lc,
+                    orbitR: orbitR,
+                    orbitAngle: orbitAngle,
+                    orbitSpeed: (Math.random() - 0.5) * 0.002
+                });
+                spawnWarpIn(sx, sy, lc ? lc.color : COLORS.cyan);
+            }
+            const station = spaceStations.get(tname);
+            if (station && station.active) station.size += 0.5; // Evolve!
         }
         
         document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
@@ -512,12 +573,8 @@ function update(dt) {
         document.getElementById('dateDisplay').innerText = event.timestamp.split('T')[0];
         document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
 
-        const isMain = event.branch === 'main' || event.branch === 'master';
-        const mainX = width / 2;
-        const mainY = height * 0.8;
-
-        if (event.track) {
-            const shipKey = event.track;
+        { // Everyone gets a ship! (Committers are players, not branches)
+            const shipKey = event.email || event.author || 'unknown';
             if (!ships.has(shipKey)) {
                 const side = Math.random() > 0.5 ? 1 : -1;
                 
@@ -566,7 +623,27 @@ function update(dt) {
 
             const ship = ships.get(shipKey);
             
+            let targetX = mainX;
+            let targetY = mainY - 30;
+            if (event.track) {
+                const tname = event.track_display || event.track;
+                const station = spaceStations.get(tname);
+                if (station && station.active) {
+                    targetX = station.x;
+                    targetY = station.y;
+                }
+            }
+            
             if (event.is_merge) {
+                if (event.track) {
+                    const tname = event.track_display || event.track;
+                    const station = spaceStations.get(tname);
+                    if (station) {
+                        station.active = false;
+                        spawnExplosion(station.x, station.y, station.color);
+                    }
+                }
+                
                 ship.targetX = mainX;
                 ship.y += 100; // dive
                 
@@ -584,8 +661,8 @@ function update(dt) {
                 
                 ship.active = false;
             } else {
-                if (event.added > 0) spawnLaser(ship.x, ship.y, mainX, mainY - 30, 'add', event.added);
-                if (event.deleted > 0) spawnLaser(ship.x, ship.y, mainX, mainY - 30, 'del', event.deleted);
+                if (event.added > 0) spawnLaser(ship.x, ship.y, targetX, targetY, 'add', event.added);
+                if (event.deleted > 0) spawnLaser(ship.x, ship.y, targetX, targetY, 'del', event.deleted);
             }
         }
 
@@ -617,6 +694,60 @@ function update(dt) {
             ship.active = false;
         }
     });
+
+    const mainX = width / 2;
+    const mainY = height * 0.8;
+
+    // Update Space Stations
+    spaceStations.forEach((station, tname) => {
+        if (station.active && station.lifecycle) {
+            if (currentTime >= station.lifecycle.mergedAt) {
+                station.active = false;
+                // Merge into Mothership!
+                tractorBeams.push({
+                    x: station.x, y: station.y,
+                    tx: mainX, ty: mainY - 30,
+                    color: station.color,
+                    life: 2.0 
+                });
+                spawnExplosion(station.x, station.y, station.color);
+            } else {
+                // Orbit Mothership
+                station.orbitAngle += station.orbitSpeed * (gameSpeed * dynamicSpeedMultiplier);
+                station.x = mainX + Math.cos(station.orbitAngle) * station.orbitR;
+                station.y = mainY - 50 + Math.sin(station.orbitAngle) * station.orbitR;
+            }
+        }
+    });
+
+    // Update Tracks Log UI
+    if (Math.random() < 0.2) {
+        const table = document.getElementById('tracksLogTable');
+        if (table) {
+            let html = '';
+            const activeLcs = Array.from(globalTrackLifecycles.values())
+                .filter(lc => currentTime >= lc.start)
+                .sort((a, b) => b.start - a.start);
+                
+            activeLcs.forEach(lc => {
+                const isMerged = currentTime >= lc.mergedAt;
+                const status = isMerged ? '<span class="text-purple-400">🟣 MERGED</span>' : '<span class="text-green-400 animate-pulse">🟢 ACTIVE</span>';
+                html += `
+                    <div class="bg-gray-900/80 border border-gray-800 p-2 rounded text-xs flex flex-col gap-1 shadow-[0_0_5px_currentColor]" style="color: ${lc.color}">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-white truncate w-40" style="text-shadow: 0 0 5px ${lc.color}">${lc.name}</span>
+                            ${status}
+                        </div>
+                        <div class="flex justify-between text-gray-400 text-[10px]">
+                            <span>Commits: ${lc.commits}</span>
+                            <span>${new Date(lc.start).toISOString().split('T')[0]}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            table.innerHTML = html;
+        }
+    }
 
     // Update lasers
     for (let i = lasers.length - 1; i >= 0; i--) {
@@ -959,6 +1090,39 @@ function draw() {
         ctx.fillText(titleText, ship.x - titleWidth/2, ship.y - 31);
     });
 
+    // Draw Space Stations
+    spaceStations.forEach((station, tname) => {
+        if (!station.active) return;
+        ctx.save();
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = station.color;
+        ctx.fillStyle = station.color;
+        
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) { // Hexagon geometry
+            const a = i * Math.PI / 3 + (currentTime / 1000);
+            const r = station.size;
+            const hx = station.x + Math.cos(a) * r;
+            const hy = station.y + Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.fill();
+        
+        // Inner core
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(station.x, station.y, station.size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px "Share Tech Mono"';
+        const tw = ctx.measureText(tname).width;
+        ctx.fillText(tname, station.x - tw/2, station.y + station.size + 15);
+        ctx.restore();
+    });
+
     explosions.forEach(e => {
         ctx.shadowBlur = 10;
         ctx.shadowColor = e.color;
@@ -1125,6 +1289,79 @@ document.getElementById('speedSlider').oninput = (e) => {
     gameSpeed = parseInt(e.target.value);
     document.getElementById('speedDisplay').innerText = gameSpeed + 'x';
 };
+
+const progressContainer = document.getElementById('progressContainer');
+if (progressContainer) {
+    progressContainer.onclick = (e) => {
+        if (!timeline || timeline.length === 0) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const targetIndex = Math.floor(percent * (timeline.length - 1));
+        
+        // Reset visual and calculation state
+        currentIndex = 0;
+        score = 0;
+        totalCommits = 0;
+        activePlayers.clear();
+        activeTracks.clear();
+        ships.clear();
+        spaceStations.clear();
+        lasers = [];
+        explosions = [];
+        tractorBeams = [];
+        activeBranches = 0;
+        
+        // Fast forward state mathematically
+        while (currentIndex < targetIndex) {
+            const event = timeline[currentIndex];
+            totalCommits++;
+            const activeB = Array.from(ships.values()).filter(s => s.active).length;
+            score += (event.added + event.deleted) * 10 + (activeB * 100);
+            if (event.email) activePlayers.add(event.email);
+            if (event.track) activeTracks.add(event.track);
+            
+            const shipKey = event.email || event.author || 'unknown';
+            if (!ships.has(shipKey)) {
+                ships.set(shipKey, {
+                    active: true,
+                    name: event.author || 'Unknown',
+                    branch: event.branch,
+                    track: event.track_display || event.track || null,
+                    is_conductor: event.is_conductor || false,
+                    color: SHIP_COLORS[ships.size % SHIP_COLORS.length],
+                    avatarUrl: event.avatarUrl,
+                    x: width/2 + (Math.random()>0.5?1:-1) * (100+Math.random()*200),
+                    targetX: width/2 + (Math.random()>0.5?1:-1) * (150+Math.random()*150),
+                    y: height * 0.2 + Math.random() * (height * 0.4)
+                });
+            } else {
+                const ship = ships.get(shipKey);
+                ship.active = true;
+                ship.branch = event.branch;
+                if (event.is_conductor) ship.is_conductor = true;
+                if (event.track) ship.track = event.track_display || event.track;
+            }
+            
+            if (event.is_merge) {
+                ships.get(shipKey).active = false;
+            }
+            currentIndex++;
+        }
+        
+        if (currentIndex < timeline.length) {
+            currentTime = new Date(timeline[currentIndex].timestamp).getTime();
+            document.getElementById('dateDisplay').innerText = timeline[currentIndex].timestamp.split('T')[0];
+        }
+        
+        // Force UI updates immediately
+        document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
+        document.getElementById('commitsDisplay').innerText = totalCommits;
+        document.getElementById('playersDisplay').innerText = activePlayers.size;
+        const totalTracksText = allRepoTracks.length ? `${activeTracks.size} / ${allRepoTracks.length}` : activeTracks.size;
+        document.getElementById('tracksDisplay').innerText = totalTracksText;
+        document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
+    };
+}
 
 async function initRepos() {
     let repos = [];
