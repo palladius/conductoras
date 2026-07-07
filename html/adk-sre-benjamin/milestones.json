@@ -126,13 +126,13 @@
     "merge": "2026-06-03T18:16:15+02:00"
   },
   {
-    "id": "adk_observability_cloud_run_20260603",
-    "display_name": "Deploy SRE dashboard to Cloud Run via just de...",
-    "ghi": "1",
+    "id": "wiki_cross_linking_20260603",
+    "display_name": "Support project cross-referencing inside Proj...",
+    "ghi": "7",
     "creation": "2026-06-04T09:02:38+02:00",
     "impl_start": "2026-06-04T09:02:38+02:00",
     "impl_end": "2026-06-16T10:30:10+02:00",
-    "merge": "2026-06-16T15:48:35+02:00"
+    "merge": "2026-06-16T12:15:26+02:00"
   },
   {
     "id": "incident_status_taxonomy_20260603",
@@ -144,15 +144,6 @@
     "merge": "2026-06-16T15:05:46+02:00"
   },
   {
-    "id": "wiki_cross_linking_20260603",
-    "display_name": "Support project cross-referencing inside Proj...",
-    "ghi": "7",
-    "creation": "2026-06-04T09:02:38+02:00",
-    "impl_start": "2026-06-04T09:02:38+02:00",
-    "impl_end": "2026-06-16T10:30:10+02:00",
-    "merge": "2026-06-16T12:15:26+02:00"
-  },
-  {
     "id": "incident_delete_archive_20260603",
     "display_name": "Add Archive capability (direct, hides inciden...",
     "ghi": "6",
@@ -160,6 +151,15 @@
     "impl_start": "2026-06-04T09:02:38+02:00",
     "impl_end": "2026-06-16T10:30:10+02:00",
     "merge": "2026-06-16T12:15:40+02:00"
+  },
+  {
+    "id": "adk_observability_cloud_run_20260603",
+    "display_name": "Deploy SRE dashboard to Cloud Run via just de...",
+    "ghi": "1",
+    "creation": "2026-06-04T09:02:38+02:00",
+    "impl_start": "2026-06-04T09:02:38+02:00",
+    "impl_end": "2026-06-16T10:30:10+02:00",
+    "merge": "2026-06-16T15:48:35+02:00"
   },
   {
     "id": "ui_navigation_deep_reload_20260604",
@@ -171,15 +171,6 @@
     "merge": "2026-06-04T10:12:03+02:00"
   },
   {
-    "id": "better_wiki_edit_ui_20260604",
-    "display_name": "Improve the wiki editing layout to optimize w...",
-    "ghi": "10",
-    "creation": "2026-06-04T12:27:14+02:00",
-    "impl_start": "2026-06-04T12:27:14+02:00",
-    "impl_end": "2026-06-16T10:30:10+02:00",
-    "merge": "2026-06-16T12:02:12+02:00"
-  },
-  {
     "id": "graduate_local_state_cloud_20260604",
     "display_name": "Graduate Project Benjamin local state (incide...",
     "ghi": "9",
@@ -187,6 +178,15 @@
     "impl_start": "2026-06-04T12:27:14+02:00",
     "impl_end": "2026-06-16T10:30:10+02:00",
     "merge": "2026-06-16T15:07:23+02:00"
+  },
+  {
+    "id": "better_wiki_edit_ui_20260604",
+    "display_name": "Improve the wiki editing layout to optimize w...",
+    "ghi": "10",
+    "creation": "2026-06-04T12:27:14+02:00",
+    "impl_start": "2026-06-04T12:27:14+02:00",
+    "impl_end": "2026-06-16T10:30:10+02:00",
+    "merge": "2026-06-16T12:02:12+02:00"
   },
   {
     "id": "sre_demo_domain_20260604",
@@ -234,6 +234,24 @@
     "merge": "2026-06-16T15:47:32+02:00"
   },
   {
+    "id": "mcp_streamline_abilities_20260616",
+    "display_name": "P1 Add MCP to streamline ahents abilities",
+    "ghi": "22",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T16:41:47+02:00"
+  },
+  {
+    "id": "fuse_mount_gcs_discovery_20260616",
+    "display_name": "Fuse-mount discovery folder on GCS",
+    "ghi": "11",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:20:54+02:00",
+    "merge": "2026-06-16T16:20:54+02:00"
+  },
+  {
     "id": "workspace_agent_installation_20260616",
     "display_name": "Feature Request: Implement Workspace-based Ag...",
     "ghi": "19",
@@ -252,13 +270,13 @@
     "merge": "2026-06-16T16:41:47+02:00"
   },
   {
-    "id": "mcp_streamline_abilities_20260616",
-    "display_name": "P1 Add MCP to streamline ahents abilities",
-    "ghi": "22",
+    "id": "managed_agents_sandbox_20260616",
+    "display_name": "Use Managed Agents API to create a solid SRE ...",
+    "ghi": "23",
     "creation": "2026-06-16T16:18:46+02:00",
     "impl_start": "2026-06-16T16:18:46+02:00",
     "impl_end": "2026-06-16T16:18:46+02:00",
-    "merge": "2026-06-16T16:41:47+02:00"
+    "merge": "2026-06-16T17:40:10+02:00"
   },
   {
     "id": "migrate_tf_cb_logic_20260616",
@@ -268,24 +286,6 @@
     "impl_start": "2026-06-16T16:18:46+02:00",
     "impl_end": "2026-06-16T16:18:46+02:00",
     "merge": "2026-06-16T16:41:47+02:00"
-  },
-  {
-    "id": "fuse_mount_gcs_discovery_20260616",
-    "display_name": "Fuse-mount discovery folder on GCS",
-    "ghi": "11",
-    "creation": "2026-06-16T16:18:46+02:00",
-    "impl_start": "2026-06-16T16:18:46+02:00",
-    "impl_end": "2026-06-16T16:20:54+02:00",
-    "merge": "2026-06-16T16:20:54+02:00"
-  },
-  {
-    "id": "managed_agents_sandbox_20260616",
-    "display_name": "Use Managed Agents API to create a solid SRE ...",
-    "ghi": "23",
-    "creation": "2026-06-16T16:18:46+02:00",
-    "impl_start": "2026-06-16T16:18:46+02:00",
-    "impl_end": "2026-06-16T16:18:46+02:00",
-    "merge": "2026-06-16T17:40:10+02:00"
   },
   {
     "id": "disable_mock_fallback_dev_20260616",
