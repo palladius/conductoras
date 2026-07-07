@@ -1,5 +1,5 @@
 output: demo.webm
-url: http://localhost:8000/?repo=adk-sre-benjamin&skip_briefing=true
+url: http://localhost:8001/?repo=adk-sre-benjamin&skip_briefing=true
 
 viewport:
   width: 1280

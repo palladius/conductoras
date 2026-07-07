@@ -9,7 +9,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from git_arcade_parser import GitHistoryParser
 
-PORT = 8000
+PORT = 8001
 GIT_DIR = os.path.expanduser("~/git")
 
 class ArcadeHandler(http.server.SimpleHTTPRequestHandler):

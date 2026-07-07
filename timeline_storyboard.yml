@@ -1,5 +1,5 @@
 output: timeline_demo.webm
-url: http://localhost:8000/timeline.html?repo=adk-sre-benjamin
+url: http://localhost:8001/timeline.html?repo=adk-sre-benjamin
 
 viewport:
   width: 1280
