@@ -28,6 +28,15 @@
             z-index: 10;
         }
 
+        .hud-log {
+            pointer-events: auto !important;
+            opacity: 0.25;
+            transition: opacity 0.3s ease, border-color 0.3s ease;
+        }
+        .hud-log:hover {
+            opacity: 0.95;
+        }
+
         .hud-top {
             top: 20px;
             left: 20px;
@@ -112,7 +121,7 @@
         </div>
     </div>
 
-    <div class="hud" style="top: 80px; left: 20px; width: 350px; background: rgba(0, 20, 40, 0.8); border: 2px solid #0ff; box-shadow: 0 0 15px #0ff, inset 0 0 10px #0ff; border-radius: 8px; padding: 15px; max-height: calc(100vh - 200px); overflow-y: auto;">
+    <div class="hud hud-log" style="top: 80px; left: 20px; width: 350px; background: rgba(0, 20, 40, 0.8); border: 2px solid #0ff; box-shadow: 0 0 15px #0ff, inset 0 0 10px #0ff; border-radius: 8px; padding: 15px; max-height: 50vh; overflow-y: auto;">
         <h3 class="text-lg text-cyan-400 font-bold mb-3 border-b border-[#0ff]/20 pb-1 font-mono tracking-widest" style="font-family: 'Press Start 2P', cursive; font-size: 10px;">🛰️ TRACKS LOG</h3>
         <div id="tracksLogTable" class="flex flex-col gap-2 font-mono">
             <!-- Dynamic rows -->

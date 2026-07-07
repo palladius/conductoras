@@ -816,7 +816,15 @@ function update(dt) {
         if (table) {
             let html = '';
             const activeLcs = Array.from(globalTrackLifecycles.values())
-                .filter(lc => currentTime >= lc.start)
+                .filter(lc => {
+                    if (currentTime < lc.start) return false;
+                    const isMerged = currentTime >= lc.mergedAt;
+                    if (isMerged) {
+                        const ageMergedDays = (currentTime - lc.mergedAt) / (1000 * 60 * 60 * 24);
+                        if (ageMergedDays > 3) return false;
+                    }
+                    return true;
+                })
                 .sort((a, b) => b.start - a.start);
                 
             activeLcs.forEach(lc => {
