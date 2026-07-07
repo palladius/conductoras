@@ -831,8 +831,15 @@ function update(dt) {
             activeLcs.forEach(lc => {
                 const isMerged = currentTime >= lc.mergedAt;
                 const status = isMerged ? '<span class="text-purple-400">🟣 MERGED</span>' : '<span class="text-green-400 animate-pulse">🟢 ACTIVE</span>';
+                
+                let rowOpacity = 1.0;
+                if (isMerged) {
+                    const ageMergedDays = (currentTime - lc.mergedAt) / (1000 * 60 * 60 * 24);
+                    rowOpacity = Math.max(0.0, 1.0 - (ageMergedDays / 3.0));
+                }
+
                 html += `
-                    <div class="bg-gray-900/80 border border-gray-800 p-2 rounded text-xs flex flex-col gap-1 shadow-[0_0_5px_currentColor]" style="color: ${lc.color}">
+                    <div class="bg-gray-900/80 border border-gray-800 p-2 rounded text-xs flex flex-col gap-1 shadow-[0_0_5px_currentColor]" style="color: ${lc.color}; opacity: ${rowOpacity}; transition: opacity 0.15s ease;">
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-white truncate w-40" style="text-shadow: 0 0 5px ${lc.color}">${lc.name}</span>
                             ${status}
@@ -927,23 +934,43 @@ function drawTrackRect(x, y, w, h, text, color, isGlowing) {
     }
     ctx.strokeRect(x - w/2, y - h/2, w, h);
     
-    // Draw text inside the box
-    ctx.fillStyle = color;
+    // Parse GHI prefix if any
+    let ghiText = '';
+    let mainText = text;
+    const match = text.match(/^(#\d+\s+)(.*)$/);
+    if (match) {
+        ghiText = match[1];
+        mainText = match[2];
+    }
+    
     ctx.font = '9px "Share Tech Mono"';
-    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowBlur = 0;
     
-    let displayText = text;
+    // Truncate mainText if the combined width exceeds maxTextWidth
     const maxTextWidth = w - 10;
-    if (ctx.measureText(displayText).width > maxTextWidth) {
-        while (ctx.measureText(displayText + '..').width > maxTextWidth && displayText.length > 0) {
-            displayText = displayText.slice(0, -1);
+    const fullText = ghiText + mainText;
+    if (ctx.measureText(fullText).width > maxTextWidth) {
+        while (ctx.measureText(ghiText + mainText + '..').width > maxTextWidth && mainText.length > 0) {
+            mainText = mainText.slice(0, -1);
         }
-        displayText += '..';
+        mainText += '..';
     }
     
-    ctx.fillText(displayText, x, y);
+    const ghiWidth = ctx.measureText(ghiText).width;
+    const mainWidth = ctx.measureText(mainText).width;
+    const totalW = ghiWidth + mainWidth;
+    
+    const startX = x - totalW / 2;
+    ctx.textAlign = 'left';
+    
+    if (ghiText) {
+        ctx.fillStyle = '#ffffff'; // White for GHI
+        ctx.fillText(ghiText, startX, y);
+    }
+    ctx.fillStyle = color; // Original neon color for the rest
+    ctx.fillText(mainText, startX + ghiWidth, y);
+    
     ctx.restore();
 }
 
@@ -966,7 +993,7 @@ function drawTrackNodes() {
             return;
         }
 
-        let alpha = 1.0;
+        let alpha = 0.5; // Base alpha is half transparent!
         let color = '#0f0'; // neon green for completed
         
         const isTargeted = targetedTracks.has(track);
@@ -974,12 +1001,12 @@ function drawTrackNodes() {
         if (isTargeted) {
             color = '#ff0'; // neon yellow for active/targeted
         } else if (currentTime > info.lastTime) {
-            // Completed track: fade it out over 5 simulated days
+            // Completed track: fade it out over 5 simulated days starting from 0.5
             const ageDays = (currentTime - info.lastTime) / (1000 * 60 * 60 * 24);
             if (ageDays > 5) {
                 return; // Hidden completely
             }
-            alpha = 1.0 - (ageDays / 5);
+            alpha = 0.5 * (1.0 - (ageDays / 5));
         }
 
         const coords = getTrackNodeCoords(track);
@@ -987,7 +1014,7 @@ function drawTrackNodes() {
         
         ctx.save();
         ctx.globalAlpha = alpha;
-        const cleanName = info.cleanName.toUpperCase();
+        const cleanName = info.cleanName; // Keep case exactly as is!
         drawTrackRect(coords.x, coords.y, 190, 24, cleanName, color, true);
         ctx.restore();
     });
