@@ -760,8 +760,10 @@ function draw() {
 
     ctx.globalAlpha = 1.0;
     ships.forEach((ship, branch) => {
+        if (!ship.active) return;
+        
         // Draw tractor beam laser connection to the corresponding track node if active!
-        if (ship.active && ship.rawTrackName) {
+        if (ship.rawTrackName) {
             const coords = getTrackNodeCoords(ship.rawTrackName);
             const info = tracksLifespans.get(ship.rawTrackName);
             const isWithinLifespan = info && (currentTime >= info.firstTime && currentTime <= info.lastTime);
