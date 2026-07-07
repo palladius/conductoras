@@ -68,6 +68,7 @@ let activeTracks = new Set();
 let allRepoTracks = [];
 let tracksLifespans = new Map();
 let lastCommitTime = new Map();
+let commitCooldown = 0;
 
 // Entities
 let stars = [];
@@ -253,6 +254,72 @@ function showBriefing(players, repoName, totalCommitsCount, totalTracksCount) {
     overlay.classList.remove('hidden');
 }
 
+function jumpToTimelineIndex(index) {
+    if (!timeline || timeline.length === 0) return;
+    if (index < 0) index = 0;
+    if (index >= timeline.length) index = timeline.length - 1;
+    
+    currentIndex = index;
+    currentTime = new Date(timeline[currentIndex].timestamp).getTime();
+    commitCooldown = 0;
+    
+    score = 0;
+    totalCommits = 0;
+    activePlayers.clear();
+    activeTracks.clear();
+    lastCommitTime.clear();
+    
+    ships.forEach(ship => {
+        ship.active = false;
+    });
+    
+    lasers = [];
+    explosions = [];
+    tractorBeams = [];
+    
+    const mainX = width / 2;
+    const mainY = height * 0.8;
+    
+    for (let i = 0; i <= currentIndex; i++) {
+        const event = timeline[i];
+        const eventTime = new Date(event.timestamp).getTime();
+        totalCommits++;
+        
+        if (event.email) {
+            activePlayers.add(event.email);
+        }
+        if (event.track) {
+            activeTracks.add(event.track);
+            lastCommitTime.set(event.track, eventTime);
+            
+            const shipKey = event.track;
+            if (ships.has(shipKey)) {
+                const ship = ships.get(shipKey);
+                ship.active = true;
+                if (event.is_conductor) {
+                    ship.is_conductor = true;
+                }
+            }
+        }
+        
+        score += (event.added || 0) * 10 + (event.deleted || 0) * 5;
+        if (event.is_merge) {
+            score += 500;
+            if (event.track && ships.has(event.track)) {
+                ships.get(event.track).active = false;
+            }
+        }
+    }
+    
+    document.getElementById('scoreDisplay').innerText = score.toString().padStart(6, '0');
+    document.getElementById('commitsDisplay').innerText = totalCommits;
+    document.getElementById('playersDisplay').innerText = activePlayers.size;
+    const totalTracksText = allRepoTracks.length ? `${activeTracks.size} / ${allRepoTracks.length}` : activeTracks.size;
+    document.getElementById('tracksDisplay').innerText = totalTracksText;
+    document.getElementById('dateDisplay').innerText = timeline[currentIndex].timestamp.split('T')[0];
+    document.getElementById('progressBar').style.width = `${(currentIndex / timeline.length) * 100}%`;
+}
+
 async function loadTimeline(repoName) {
     if (!repoName) return;
     currentRepoName = repoName;
@@ -409,14 +476,19 @@ function update(dt) {
     // Smooth lerp for speed transitions
     dynamicSpeedMultiplier += (targetSpeed - dynamicSpeedMultiplier) * 0.05;
 
-    // Advance time
-    const timeStep = dt * (gameSpeed * dynamicSpeedMultiplier) * 8000000; 
-    currentTime += timeStep;
+    // Update commit cooldown
+    if (commitCooldown > 0) {
+        commitCooldown -= dt;
+    } else {
+        // Advance time
+        const timeStep = dt * (gameSpeed * dynamicSpeedMultiplier) * 8000000; 
+        currentTime += timeStep;
+    }
     
     // Recalculate active branches
     activeBranches = Array.from(ships.values()).filter(s => s.active).length;
 
-    while (currentIndex < timeline.length) {
+    while (currentIndex < timeline.length && commitCooldown <= 0) {
         const event = timeline[currentIndex];
         const eventTime = new Date(event.timestamp).getTime();
         
@@ -518,6 +590,10 @@ function update(dt) {
         }
 
         currentIndex++;
+        
+        // Pacing cooldown: pause time progression briefly to let the visual sequence play out!
+        commitCooldown = 2.5 / gameSpeed;
+        break;
     }
 
     // Update stars (scaled by dynamic speed)

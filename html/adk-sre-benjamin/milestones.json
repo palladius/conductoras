@@ -1,0 +1,299 @@
+[
+  {
+    "id": "core_ics_delegation_20260529",
+    "display_name": "Implement Core Incident Command System and Le...",
+    "ghi": "N/A",
+    "creation": "2026-05-29T12:05:09+02:00",
+    "impl_start": "2026-05-29T12:05:09+02:00",
+    "impl_end": "2026-05-29T12:56:20+02:00",
+    "merge": "2026-05-29T12:56:20+02:00"
+  },
+  {
+    "id": "mock_diagnostics_20260529",
+    "display_name": "Implement Mock Diagnostics and Fast E2E Incid...",
+    "ghi": "N/A",
+    "creation": "2026-05-29T12:56:53+02:00",
+    "impl_start": "2026-05-29T12:56:53+02:00",
+    "impl_end": "2026-06-01T07:56:58+02:00",
+    "merge": "2026-06-01T07:56:58+02:00"
+  },
+  {
+    "id": "sre_dashboard_20260601",
+    "display_name": "Create SRE Web Dashboard for live simulation ...",
+    "ghi": "N/A",
+    "creation": "2026-06-01T07:58:39+02:00",
+    "impl_start": "2026-06-01T07:58:39+02:00",
+    "impl_end": "2026-06-01T08:07:04+02:00",
+    "merge": "2026-06-01T08:07:04+02:00"
+  },
+  {
+    "id": "comms_integration_20260601",
+    "display_name": "Integrate Communications Lead Madhavi with Te...",
+    "ghi": "N/A",
+    "creation": "2026-06-01T16:32:42+02:00",
+    "impl_start": "2026-06-01T16:32:42+02:00",
+    "impl_end": "2026-06-01T16:35:11+02:00",
+    "merge": "2026-06-01T16:35:11+02:00"
+  },
+  {
+    "id": "sre_skills_integration_20260601",
+    "display_name": "Implement Modular Skill Adapter allowing SRE ...",
+    "ghi": "N/A",
+    "creation": "2026-06-01T16:37:00+02:00",
+    "impl_start": "2026-06-01T16:37:00+02:00",
+    "impl_end": "2026-06-01T16:38:21+02:00",
+    "merge": "2026-06-01T16:38:21+02:00"
+  },
+  {
+    "id": "live_gcp_connectors_20260601",
+    "display_name": "Initialize Live GCP Connectors Track to conne...",
+    "ghi": "27",
+    "creation": "2026-06-01T21:04:55+02:00",
+    "impl_start": "2026-06-01T21:04:55+02:00",
+    "impl_end": "2026-06-16T12:46:29+02:00",
+    "merge": "2026-06-16T12:46:29+02:00"
+  },
+  {
+    "id": "gcp_resource_discovery_20260601",
+    "display_name": "lets add a discovery function. given a prohec...",
+    "ghi": "26",
+    "creation": "2026-06-01T21:23:12+02:00",
+    "impl_start": "2026-06-01T21:23:12+02:00",
+    "impl_end": "2026-06-16T15:05:46+02:00",
+    "merge": "2026-06-16T15:05:46+02:00"
+  },
+  {
+    "id": "cross_chat_mirroring_20260602",
+    "display_name": "Manage WebChat on port 8080 and Telegram bot,...",
+    "ghi": "N/A",
+    "creation": "2026-06-02T08:32:44+02:00",
+    "impl_start": "2026-06-02T08:32:44+02:00",
+    "impl_end": "2026-06-02T08:37:17+02:00",
+    "merge": "2026-06-02T08:37:17+02:00"
+  },
+  {
+    "id": "cross_chat_statefulness_20260602",
+    "display_name": "We should have some sort of statefulness. Sth...",
+    "ghi": "N/A",
+    "creation": "2026-06-02T08:52:50+02:00",
+    "impl_start": "2026-06-02T08:52:50+02:00",
+    "impl_end": "2026-06-03T17:35:25+02:00",
+    "merge": "2026-06-16T12:32:16+02:00"
+  },
+  {
+    "id": "pending_mutations_registry_20260602",
+    "display_name": "If system has a conjecture to fix things whic...",
+    "ghi": "28",
+    "creation": "2026-06-02T08:54:30+02:00",
+    "impl_start": "2026-06-02T08:54:30+02:00",
+    "impl_end": "2026-06-16T12:43:26+02:00",
+    "merge": "2026-06-16T15:55:17+02:00"
+  },
+  {
+    "id": "multi_view_project_explorer_20260602",
+    "display_name": "Revive SRE project discovery with multi-view ...",
+    "ghi": "N/A",
+    "creation": "2026-06-02T11:38:06+02:00",
+    "impl_start": "2026-06-02T11:38:06+02:00",
+    "impl_end": "2026-06-02T16:17:16+02:00",
+    "merge": "2026-06-16T12:32:12+02:00"
+  },
+  {
+    "id": "telegram_incident_creation_20260603",
+    "display_name": "Interactive Telegram Incident Creation from v...",
+    "ghi": "29",
+    "creation": "2026-06-03T17:47:25+02:00",
+    "impl_start": "2026-06-03T17:47:25+02:00",
+    "impl_end": "2026-06-16T12:43:28+02:00",
+    "merge": "2026-06-16T12:43:28+02:00"
+  },
+  {
+    "id": "better_copilot_sidebar_20260603",
+    "display_name": "Refactor right-hand panel: rename to SRE Seco...",
+    "ghi": "N/A",
+    "creation": "2026-06-03T17:57:26+02:00",
+    "impl_start": "2026-06-03T17:57:26+02:00",
+    "impl_end": "2026-06-03T18:02:25+02:00",
+    "merge": "2026-06-03T18:02:25+02:00"
+  },
+  {
+    "id": "project_explorer_ui_improvements_20260603",
+    "display_name": "Improve Project Explorer UI by moving tabs to...",
+    "ghi": "N/A",
+    "creation": "2026-06-03T18:11:15+02:00",
+    "impl_start": "2026-06-03T18:11:15+02:00",
+    "impl_end": "2026-06-03T18:16:15+02:00",
+    "merge": "2026-06-03T18:16:15+02:00"
+  },
+  {
+    "id": "adk_observability_cloud_run_20260603",
+    "display_name": "Deploy SRE dashboard to Cloud Run via just de...",
+    "ghi": "1",
+    "creation": "2026-06-04T09:02:38+02:00",
+    "impl_start": "2026-06-04T09:02:38+02:00",
+    "impl_end": "2026-06-16T10:30:10+02:00",
+    "merge": "2026-06-16T15:48:35+02:00"
+  },
+  {
+    "id": "incident_status_taxonomy_20260603",
+    "display_name": "Define a strong deterministic taxonomy of sta...",
+    "ghi": "5",
+    "creation": "2026-06-04T09:02:38+02:00",
+    "impl_start": "2026-06-04T09:02:38+02:00",
+    "impl_end": "2026-06-16T15:05:46+02:00",
+    "merge": "2026-06-16T15:05:46+02:00"
+  },
+  {
+    "id": "wiki_cross_linking_20260603",
+    "display_name": "Support project cross-referencing inside Proj...",
+    "ghi": "7",
+    "creation": "2026-06-04T09:02:38+02:00",
+    "impl_start": "2026-06-04T09:02:38+02:00",
+    "impl_end": "2026-06-16T10:30:10+02:00",
+    "merge": "2026-06-16T12:15:26+02:00"
+  },
+  {
+    "id": "incident_delete_archive_20260603",
+    "display_name": "Add Archive capability (direct, hides inciden...",
+    "ghi": "6",
+    "creation": "2026-06-04T09:02:38+02:00",
+    "impl_start": "2026-06-04T09:02:38+02:00",
+    "impl_end": "2026-06-16T10:30:10+02:00",
+    "merge": "2026-06-16T12:15:40+02:00"
+  },
+  {
+    "id": "ui_navigation_deep_reload_20260604",
+    "display_name": "Fix UI Navigation bug where reloading deep pr...",
+    "ghi": "N/A",
+    "creation": "2026-06-04T10:12:03+02:00",
+    "impl_start": "2026-06-04T10:12:03+02:00",
+    "impl_end": "2026-06-04T10:12:03+02:00",
+    "merge": "2026-06-04T10:12:03+02:00"
+  },
+  {
+    "id": "better_wiki_edit_ui_20260604",
+    "display_name": "Improve the wiki editing layout to optimize w...",
+    "ghi": "10",
+    "creation": "2026-06-04T12:27:14+02:00",
+    "impl_start": "2026-06-04T12:27:14+02:00",
+    "impl_end": "2026-06-16T10:30:10+02:00",
+    "merge": "2026-06-16T12:02:12+02:00"
+  },
+  {
+    "id": "graduate_local_state_cloud_20260604",
+    "display_name": "Graduate Project Benjamin local state (incide...",
+    "ghi": "9",
+    "creation": "2026-06-04T12:27:14+02:00",
+    "impl_start": "2026-06-04T12:27:14+02:00",
+    "impl_end": "2026-06-16T10:30:10+02:00",
+    "merge": "2026-06-16T15:07:23+02:00"
+  },
+  {
+    "id": "sre_demo_domain_20260604",
+    "display_name": "Create a SRE Demo domain under discover/domai...",
+    "ghi": "N/A",
+    "creation": "2026-06-04T17:50:05+02:00",
+    "impl_start": "2026-06-04T17:50:05+02:00",
+    "impl_end": "2026-06-04T17:50:05+02:00",
+    "merge": "2026-06-04T17:58:11+02:00"
+  },
+  {
+    "id": "sre_extension_prompts_20260605",
+    "display_name": "Use SRE Extension skills to power up the agen...",
+    "ghi": "N/A",
+    "creation": "2026-06-05T09:53:31+02:00",
+    "impl_start": "2026-06-05T09:53:31+02:00",
+    "impl_end": "2026-06-05T09:56:06+02:00",
+    "merge": "2026-06-05T09:56:06+02:00"
+  },
+  {
+    "id": "unified_incident_lifecycle_observability_20260607",
+    "display_name": "Feature Request: Unified Incident Lifecycle &...",
+    "ghi": "18",
+    "creation": "2026-06-08T09:10:58+02:00",
+    "impl_start": "2026-06-08T09:10:58+02:00",
+    "impl_end": "2026-06-16T14:50:42+02:00",
+    "merge": "2026-06-16T16:41:47+02:00"
+  },
+  {
+    "id": "remove_test_project_123_20260616",
+    "display_name": "Remove test-project-123 and disable MOCKING",
+    "ghi": "N/A",
+    "creation": "2026-06-16T12:26:26+02:00",
+    "impl_start": "2026-06-16T12:26:26+02:00",
+    "impl_end": "2026-06-16T12:26:26+02:00",
+    "merge": "2026-06-16T13:19:18+02:00"
+  },
+  {
+    "id": "multi_env_state_management_20260616",
+    "display_name": "Make sense of state in multiple environments ...",
+    "ghi": "8",
+    "creation": "2026-06-16T12:50:36+02:00",
+    "impl_start": "2026-06-16T12:50:36+02:00",
+    "impl_end": "2026-06-16T12:50:36+02:00",
+    "merge": "2026-06-16T15:47:32+02:00"
+  },
+  {
+    "id": "workspace_agent_installation_20260616",
+    "display_name": "Feature Request: Implement Workspace-based Ag...",
+    "ghi": "19",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T16:19:34+02:00"
+  },
+  {
+    "id": "ai_engineering_practices_20260616",
+    "display_name": "[P4][Nice-to-have] Read this great doc and ma...",
+    "ghi": "21",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T16:41:47+02:00"
+  },
+  {
+    "id": "mcp_streamline_abilities_20260616",
+    "display_name": "P1 Add MCP to streamline ahents abilities",
+    "ghi": "22",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T16:41:47+02:00"
+  },
+  {
+    "id": "migrate_tf_cb_logic_20260616",
+    "display_name": "migrate the TF/CB logic from Pvt Codelab to h...",
+    "ghi": "15",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T16:41:47+02:00"
+  },
+  {
+    "id": "fuse_mount_gcs_discovery_20260616",
+    "display_name": "Fuse-mount discovery folder on GCS",
+    "ghi": "11",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:20:54+02:00",
+    "merge": "2026-06-16T16:20:54+02:00"
+  },
+  {
+    "id": "managed_agents_sandbox_20260616",
+    "display_name": "Use Managed Agents API to create a solid SRE ...",
+    "ghi": "23",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T17:40:10+02:00"
+  },
+  {
+    "id": "disable_mock_fallback_dev_20260616",
+    "display_name": "There's a BUG: track as GHI. \u26a0\ufe0f DEMO / MOCK D...",
+    "ghi": "31",
+    "creation": "2026-06-16T16:55:03+02:00",
+    "impl_start": "2026-06-16T16:55:03+02:00",
+    "impl_end": "2026-06-16T16:55:03+02:00",
+    "merge": "2026-06-16T16:55:58+02:00"
+  }
+]
