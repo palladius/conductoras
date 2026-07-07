@@ -135,15 +135,6 @@
     "merge": "2026-06-16T12:15:26+02:00"
   },
   {
-    "id": "incident_status_taxonomy_20260603",
-    "display_name": "Define a strong deterministic taxonomy of sta...",
-    "ghi": "5",
-    "creation": "2026-06-04T09:02:38+02:00",
-    "impl_start": "2026-06-04T09:02:38+02:00",
-    "impl_end": "2026-06-16T15:05:46+02:00",
-    "merge": "2026-06-16T15:05:46+02:00"
-  },
-  {
     "id": "incident_delete_archive_20260603",
     "display_name": "Add Archive capability (direct, hides inciden...",
     "ghi": "6",
@@ -151,6 +142,15 @@
     "impl_start": "2026-06-04T09:02:38+02:00",
     "impl_end": "2026-06-16T10:30:10+02:00",
     "merge": "2026-06-16T12:15:40+02:00"
+  },
+  {
+    "id": "incident_status_taxonomy_20260603",
+    "display_name": "Define a strong deterministic taxonomy of sta...",
+    "ghi": "5",
+    "creation": "2026-06-04T09:02:38+02:00",
+    "impl_start": "2026-06-04T09:02:38+02:00",
+    "impl_end": "2026-06-16T15:05:46+02:00",
+    "merge": "2026-06-16T15:05:46+02:00"
   },
   {
     "id": "adk_observability_cloud_run_20260603",
@@ -234,6 +234,24 @@
     "merge": "2026-06-16T15:47:32+02:00"
   },
   {
+    "id": "ai_engineering_practices_20260616",
+    "display_name": "[P4][Nice-to-have] Read this great doc and ma...",
+    "ghi": "21",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T16:41:47+02:00"
+  },
+  {
+    "id": "workspace_agent_installation_20260616",
+    "display_name": "Feature Request: Implement Workspace-based Ag...",
+    "ghi": "19",
+    "creation": "2026-06-16T16:18:46+02:00",
+    "impl_start": "2026-06-16T16:18:46+02:00",
+    "impl_end": "2026-06-16T16:18:46+02:00",
+    "merge": "2026-06-16T16:19:34+02:00"
+  },
+  {
     "id": "mcp_streamline_abilities_20260616",
     "display_name": "P1 Add MCP to streamline ahents abilities",
     "ghi": "22",
@@ -250,24 +268,6 @@
     "impl_start": "2026-06-16T16:18:46+02:00",
     "impl_end": "2026-06-16T16:20:54+02:00",
     "merge": "2026-06-16T16:20:54+02:00"
-  },
-  {
-    "id": "workspace_agent_installation_20260616",
-    "display_name": "Feature Request: Implement Workspace-based Ag...",
-    "ghi": "19",
-    "creation": "2026-06-16T16:18:46+02:00",
-    "impl_start": "2026-06-16T16:18:46+02:00",
-    "impl_end": "2026-06-16T16:18:46+02:00",
-    "merge": "2026-06-16T16:19:34+02:00"
-  },
-  {
-    "id": "ai_engineering_practices_20260616",
-    "display_name": "[P4][Nice-to-have] Read this great doc and ma...",
-    "ghi": "21",
-    "creation": "2026-06-16T16:18:46+02:00",
-    "impl_start": "2026-06-16T16:18:46+02:00",
-    "impl_end": "2026-06-16T16:18:46+02:00",
-    "merge": "2026-06-16T16:41:47+02:00"
   },
   {
     "id": "managed_agents_sandbox_20260616",

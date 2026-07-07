@@ -68,6 +68,7 @@ let activeTracks = new Set();
 let allRepoTracks = [];
 let tracksLifespans = new Map();
 let lastCommitTime = new Map();
+let lastPlayerCommitTime = new Map();
 let commitCooldown = 0;
 
 // Entities
@@ -150,18 +151,44 @@ function preScanTimeline(timelineData) {
             const tname = event.track_display || event.track;
             
             if (!tracksMap.has(event.track)) {
+                let ghiPrefix = '';
+                if (event.github_issue_number) {
+                    ghiPrefix = `#${event.github_issue_number} `;
+                } else if (event.github_issue_url) {
+                    const parts = event.github_issue_url.split('/');
+                    const num = parts[parts.length - 1];
+                    if (/^\d+$/.test(num)) {
+                        ghiPrefix = `#${num} `;
+                    }
+                }
+                const displayTitle = ghiPrefix + tname;
+
                 tracksMap.set(event.track, {
                     firstTime: eventTime,
                     lastTime: eventTime,
-                    cleanName: tname,
+                    cleanName: displayTitle,
                     githubIssueUrl: event.github_issue_url || null
                 });
             } else {
                 const info = tracksMap.get(event.track);
                 info.firstTime = Math.min(info.firstTime, eventTime);
                 info.lastTime = Math.max(info.lastTime, eventTime);
+                
+                let ghiPrefix = '';
+                if (event.github_issue_number) {
+                    ghiPrefix = `#${event.github_issue_number} `;
+                } else if (event.github_issue_url) {
+                    const parts = event.github_issue_url.split('/');
+                    const num = parts[parts.length - 1];
+                    if (/^\d+$/.test(num)) {
+                        ghiPrefix = `#${num} `;
+                    }
+                }
+                
                 if (event.track_display) {
-                    info.cleanName = event.track_display;
+                    info.cleanName = ghiPrefix + event.track_display;
+                } else {
+                    info.cleanName = ghiPrefix + tname;
                 }
                 if (event.github_issue_url) {
                     info.githubIssueUrl = event.github_issue_url;
@@ -300,11 +327,10 @@ function jumpToTimelineIndex(index) {
     activePlayers.clear();
     activeTracks.clear();
     lastCommitTime.clear();
+    lastPlayerCommitTime.clear();
     
-    ships.forEach(ship => {
-        ship.active = false;
-    });
-    
+    ships.clear();
+    spaceStations.clear();
     lasers = [];
     explosions = [];
     tractorBeams = [];
@@ -319,26 +345,72 @@ function jumpToTimelineIndex(index) {
         
         if (event.email) {
             activePlayers.add(event.email);
+            lastPlayerCommitTime.set(event.email, eventTime);
         }
         if (event.track) {
             activeTracks.add(event.track);
             lastCommitTime.set(event.track, eventTime);
             
-            const shipKey = event.track;
-            if (ships.has(shipKey)) {
-                const ship = ships.get(shipKey);
-                ship.active = true;
-                if (event.is_conductor) {
-                    ship.is_conductor = true;
-                }
+            const tname = event.track_display || event.track;
+            if (!spaceStations.has(tname)) {
+                const lc = globalTrackLifecycles.get(tname);
+                const orbitR = 150 + Math.random() * 200;
+                const orbitAngle = Math.random() * Math.PI * 2;
+                spaceStations.set(tname, {
+                    x: mainX + Math.cos(orbitAngle) * orbitR,
+                    y: mainY - 50 + Math.sin(orbitAngle) * orbitR,
+                    size: 5,
+                    active: true,
+                    merging: false,
+                    mergeAlpha: 1.0,
+                    color: lc ? lc.color : COLORS.cyan,
+                    lifecycle: lc,
+                    orbitR: orbitR,
+                    orbitAngle: orbitAngle,
+                    orbitSpeed: (Math.random() - 0.5) * 0.002
+                });
             }
+            const station = spaceStations.get(tname);
+            if (station && station.active) station.size += 0.5;
+        }
+        
+        const shipKey = event.email || event.author || 'unknown';
+        if (!ships.has(shipKey)) {
+            const color = SHIP_COLORS[ships.size % SHIP_COLORS.length];
+            const side = Math.random() > 0.5 ? 1 : -1;
+            ships.set(shipKey, {
+                x: mainX + side * (100 + Math.random() * 200),
+                targetX: mainX + side * (150 + Math.random() * 150),
+                y: height * 0.2 + Math.random() * (height * 0.4),
+                color: color,
+                avatarUrl: event.avatarUrl,
+                active: true,
+                opacity: 1.0,
+                name: event.author || 'Unknown',
+                branch: event.branch,
+                rawTrackName: event.track,
+                lastAuthor: event.author || 'Unknown'
+            });
+        } else {
+            const ship = ships.get(shipKey);
+            ship.active = true;
+            ship.opacity = 1.0;
+            ship.rawTrackName = event.track;
         }
         
         score += (event.added || 0) * 10 + (event.deleted || 0) * 5;
         if (event.is_merge) {
             score += 500;
-            if (event.track && ships.has(event.track)) {
-                ships.get(event.track).active = false;
+            if (event.track) {
+                const tname = event.track_display || event.track;
+                const station = spaceStations.get(tname);
+                if (station) {
+                    station.active = false;
+                }
+            }
+            if (ships.has(shipKey)) {
+                ships.get(shipKey).active = false;
+                ships.get(shipKey).opacity = 0.0;
             }
         }
     }
@@ -523,9 +595,10 @@ function update(dt) {
 
     while (currentIndex < timeline.length && commitCooldown <= 0) {
         const event = timeline[currentIndex];
+        const eventTime = new Date(event.timestamp).getTime();
         
         // Only process events up to the current simulated time
-        if (new Date(event.timestamp).getTime() > currentTime) {
+        if (eventTime > currentTime) {
             break;
         }
 
@@ -536,6 +609,7 @@ function update(dt) {
         score += (event.added + event.deleted) * 10 + (activeBranches * 100); // Massive score multiplier for complex branches!
         if (event.email) {
             activePlayers.add(event.email);
+            lastPlayerCommitTime.set(event.email, eventTime);
         }
         if (event.track) {
             activeTracks.add(event.track);
@@ -684,15 +758,24 @@ function update(dt) {
 
     // Update ships
     const shipActivityWindow = 2 * 24 * 60 * 60 * 1000; // 2 days
-    ships.forEach((ship, trackName) => {
-        const lastTime = lastCommitTime.get(trackName);
-        if (lastTime && (currentTime - lastTime <= shipActivityWindow)) {
-            ship.active = true;
+    ships.forEach((ship, shipKey) => {
+        const lastTime = lastPlayerCommitTime.get(shipKey);
+        const isActiveTime = lastTime && (currentTime - lastTime <= shipActivityWindow);
+        
+        if (isActiveTime) {
+            ship.opacity = Math.min(1.0, (ship.opacity || 0.0) + 0.05);
             ship.x += (ship.targetX - ship.x) * 0.05;
             ship.y += Math.sin(Date.now() / 500) * 0.5;
         } else {
-            ship.active = false;
+            ship.opacity = Math.max(0.0, (ship.opacity || 1.0) - 0.02);
+            // Slowly glide towards main center when active status expires
+            const dx = (width / 2) - ship.x;
+            const dy = (height * 0.8) - ship.y;
+            ship.x += dx * 0.01;
+            ship.y += dy * 0.01;
         }
+        
+        ship.active = (ship.opacity > 0);
     });
 
     const mainX = width / 2;
@@ -700,9 +783,16 @@ function update(dt) {
 
     // Update Space Stations
     spaceStations.forEach((station, tname) => {
-        if (station.active && station.lifecycle) {
-            if (currentTime >= station.lifecycle.mergedAt) {
-                station.active = false;
+        if (station.active) {
+            if (station.merging) {
+                station.mergeAlpha -= 0.05;
+                station.size -= 0.25;
+                if (station.mergeAlpha <= 0 || station.size <= 0) {
+                    station.active = false;
+                }
+            } else if (station.lifecycle && currentTime >= station.lifecycle.mergedAt) {
+                station.merging = true;
+                station.mergeAlpha = 1.0;
                 // Merge into Mothership!
                 tractorBeams.push({
                     x: station.x, y: station.y,
@@ -858,34 +948,39 @@ function drawTrackNodes() {
         }
     });
 
-    const activityWindow = 2 * 24 * 60 * 60 * 1000; // 2 days
     allRepoTracks.forEach((track, idx) => {
-        const lastTime = lastCommitTime.get(track);
-        if (!lastTime || (currentTime - lastTime > activityWindow)) {
-            return;
-        }
         const info = tracksLifespans.get(track);
         if (!info) return;
+
+        // Draw track rectangle only if the track work has already started in the timeline
+        if (currentTime < info.firstTime) {
+            return;
+        }
+
+        let alpha = 1.0;
+        let color = '#0f0'; // neon green for completed
+        
+        const isTargeted = targetedTracks.has(track);
+        
+        if (isTargeted) {
+            color = '#ff0'; // neon yellow for active/targeted
+        } else if (currentTime > info.lastTime) {
+            // Completed track: fade it out over 5 simulated days
+            const ageDays = (currentTime - info.lastTime) / (1000 * 60 * 60 * 24);
+            if (ageDays > 5) {
+                return; // Hidden completely
+            }
+            alpha = 1.0 - (ageDays / 5);
+        }
 
         const coords = getTrackNodeCoords(track);
         if (!coords) return;
         
-        const isDiscovered = activeTracks.has(track);
-        const isTargeted = targetedTracks.has(track);
-        
-        let color = 'rgba(255, 255, 255, 0.15)';
-        let glowing = false;
-        
-        if (isTargeted) {
-            color = '#ff0'; // neon yellow for active/targeted
-            glowing = true;
-        } else if (isDiscovered) {
-            color = '#0f0'; // neon green for completed
-            glowing = true;
-        }
-        
+        ctx.save();
+        ctx.globalAlpha = alpha;
         const cleanName = info.cleanName.toUpperCase();
-        drawTrackRect(coords.x, coords.y, 190, 24, cleanName, color, glowing);
+        drawTrackRect(coords.x, coords.y, 190, 24, cleanName, color, true);
+        ctx.restore();
     });
 }
 
@@ -968,6 +1063,8 @@ function draw() {
     ctx.globalAlpha = 1.0;
     ships.forEach((ship, branch) => {
         if (!ship.active) return;
+        ctx.save();
+        ctx.globalAlpha = ship.opacity || 1.0;
         
         // Draw tractor beam laser connection to the corresponding track node if active!
         if (ship.rawTrackName) {
@@ -1088,12 +1185,16 @@ function draw() {
         ctx.fillStyle = ship.color;
         ctx.font = '12px "Share Tech Mono"';
         ctx.fillText(titleText, ship.x - titleWidth/2, ship.y - 31);
+        ctx.restore();
     });
 
     // Draw Space Stations
     spaceStations.forEach((station, tname) => {
         if (!station.active) return;
         ctx.save();
+        if (station.merging) {
+            ctx.globalAlpha = Math.max(0.0, station.mergeAlpha);
+        }
         ctx.shadowBlur = 20;
         ctx.shadowColor = station.color;
         ctx.fillStyle = station.color;
