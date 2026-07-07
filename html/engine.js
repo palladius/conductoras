@@ -1102,26 +1102,22 @@ const btnReset = document.getElementById('btnReset');
 if (btnReset) {
     btnReset.onclick = () => {
         if (timeline && timeline.length > 0) {
-            currentIndex = 0;
-            currentTime = new Date(timeline[0].timestamp).getTime();
-            score = 0;
-            totalCommits = 0;
-            activePlayers.clear();
-            activeTracks.clear();
-            lastCommitTime.clear();
-            ships.clear();
-            lasers = [];
-            explosions = [];
-            tractorBeams = [];
-            activeBranches = 0;
+            document.getElementById('briefingOverlay').classList.add('hidden');
+            jumpToTimelineIndex(0);
             isPlaying = false;
-            document.getElementById('playersDisplay').innerText = '0';
-            document.getElementById('tracksDisplay').innerText = '0';
-            
-            // Show briefing again
-            const briefingData = preScanTimeline(timeline);
-            tracksLifespans = briefingData.tracksLifespans;
-            showBriefing(briefingData.players, currentRepoName, timeline.length, briefingData.totalTracksCount);
+        }
+    };
+}
+
+const progressBarWrapper = document.getElementById('progressBarWrapper');
+if (progressBarWrapper) {
+    progressBarWrapper.onclick = (e) => {
+        if (timeline && timeline.length > 0) {
+            const rect = progressBarWrapper.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const fraction = Math.max(0, Math.min(1, clickX / rect.width));
+            const targetIndex = Math.floor(fraction * (timeline.length - 1));
+            jumpToTimelineIndex(targetIndex);
         }
     };
 }
