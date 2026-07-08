@@ -87,6 +87,8 @@ def run_log_mode(events):
     import re
     active_stack = [] # holds active tracks in order of birth
     track_start_times = {} # maps short_track -> start datetime
+    track_end_times = {} # maps short_track -> end datetime
+    last_seen_day = None
 
     def format_duration(delta):
         total_seconds = int(delta.total_seconds())
@@ -116,11 +118,19 @@ def run_log_mode(events):
         track = event["track"]
         activity = event["activity"]
         timestamp = event["timestamp"]
+        commit_count = event.get("commit_count", 0)
 
         # Parse date and time
         dt_str = timestamp.split('T')[0]
         time_str = timestamp.split('T')[1].split('+')[0][:5]
-        display_time = f"{dt_str} {time_str}"
+
+        # Highlight new day in yellow
+        if dt_str != last_seen_day:
+            colored_day = f"\033[1;33m{dt_str}\033[0m"
+            last_seen_day = dt_str
+        else:
+            colored_day = dt_str
+        display_time = f"{colored_day} {time_str}"
 
         # Shorten track name: remove _YYYYMMDD suffix
         short_track = re.sub(r'_\d{8}$', '', track)
@@ -131,6 +141,9 @@ def run_log_mode(events):
                 active_stack.append(short_track)
             if short_track not in track_start_times:
                 track_start_times[short_track] = datetime.fromisoformat(timestamp)
+        elif activity == "impl_ended":
+            if short_track not in track_end_times:
+                track_end_times[short_track] = datetime.fromisoformat(timestamp)
         elif activity == "merged":
             if short_track in active_stack:
                 active_stack.remove(short_track)
@@ -151,13 +164,25 @@ def run_log_mode(events):
             act_emoji = "🔀"
             colored_act = f"\033[1;32mMERGED      \033[0m"
 
-        # Calculate duration if merging
+        # Calculate duration
         duration_str = ""
-        if activity == "merged" and short_track in track_start_times:
+        if activity == "impl_ended" and short_track in track_start_times:
             start_dt = track_start_times[short_track]
             end_dt = datetime.fromisoformat(timestamp)
             delta = end_dt - start_dt
-            duration_str = f" \033[1;30m(took {format_duration(delta)})\033[0m"
+            duration_str = f" \033[1;30m(impl took {format_duration(delta)})\033[0m"
+        elif activity == "merged":
+            commit_info = f", {commit_count} commits" if commit_count > 0 else ""
+            if short_track in track_end_times:
+                end_dt = track_end_times[short_track]
+                merge_dt = datetime.fromisoformat(timestamp)
+                delta = merge_dt - end_dt
+                duration_str = f" \033[1;30m(merge took {format_duration(delta)}{commit_info})\033[0m"
+            elif short_track in track_start_times:
+                start_dt = track_start_times[short_track]
+                merge_dt = datetime.fromisoformat(timestamp)
+                delta = merge_dt - start_dt
+                duration_str = f" \033[1;30m(took {format_duration(delta)})\033[0m"
 
         # Print sequential log line
         if len(active_stack) > 0:
@@ -196,7 +221,8 @@ def main():
                     "timestamp": row[0],
                     "track": row[1],
                     "activity": row[2],
-                    "details": row[3]
+                    "details": row[3],
+                    "commit_count": int(row[4]) if len(row) >= 5 else 0
                 })
 
     if not events:

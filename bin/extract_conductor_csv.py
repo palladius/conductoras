@@ -156,30 +156,35 @@ def main():
             track_name = info["display_name"]
             ghi_str = f"#{info['ghi']}" if info['ghi'] != "N/A" else ""
             display_label = f"{ghi_str} {track_name}".strip()
+            commits_count = len(info["all_commits"])
             
             csv_rows.append({
                 "timestamp": info["creation"],
                 "track": display_label,
                 "activity": "spec_created",
-                "details": info["creation_details"]
+                "details": info["creation_details"],
+                "commit_count": commits_count
             })
             csv_rows.append({
                 "timestamp": info["impl_start"],
                 "track": display_label,
                 "activity": "impl_started",
-                "details": info["impl_start_details"]
+                "details": info["impl_start_details"],
+                "commit_count": commits_count
             })
             csv_rows.append({
                 "timestamp": info["impl_end"],
                 "track": display_label,
                 "activity": "impl_ended",
-                "details": info["impl_end_details"]
+                "details": info["impl_end_details"],
+                "commit_count": commits_count
             })
             csv_rows.append({
                 "timestamp": info["merge"],
                 "track": display_label,
                 "activity": "merged",
-                "details": info["merge_details"]
+                "details": info["merge_details"],
+                "commit_count": commits_count
             })
 
     # Sort all rows chronologically by timestamp
@@ -188,11 +193,11 @@ def main():
     # Write CSV file
     with open(args.out, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["timestamp", "track", "activity", "details"])
+        writer.writerow(["timestamp", "track", "activity", "details", "commit_count"])
         for row in csv_rows:
-            writer.writerow([row["timestamp"], row["track"], row["activity"], row["details"]])
+            writer.writerow([row["timestamp"], row["track"], row["activity"], row["details"], row["commit_count"]])
 
-    print(f"Exported {len(csv_rows)} lifecycle event rows to {args.out}")
+    print(f"Exported {len(csv_rows)} lifecycle event rows with commit counts to {args.out}")
 
 if __name__ == "__main__":
     main()
