@@ -83,10 +83,10 @@ def run_hud_mode(events):
         
         time.sleep(0.4)
 
-def run_log_mode(events):
+def run_log_mode(events, is_truncated=False):
     import re
     
-    # Pass 1: Run simulation to calculate durations and discover maximum track + duration combined width
+    # Pass 1: Run simulation to calculate durations and discover column widths
     active_stack_sim = []
     track_start_times = {}
     track_end_times = {}
@@ -111,7 +111,8 @@ def run_log_mode(events):
             return f"{minutes}m"
         return f"{seconds}s"
 
-    max_combined_len = 0
+    max_track_len = 0
+    max_duration_len = 0
     calculated_events = []
 
     for event in events:
@@ -139,28 +140,28 @@ def run_log_mode(events):
             if short_track in active_stack_sim:
                 active_stack_sim.remove(short_track)
 
-        # Calculate duration string (clean, no ANSI escape codes yet for length check)
+        # Calculate duration string (clean, no prefix words like "impl took" or "merge took")
         duration_str = ""
         if activity == "impl_ended" and short_track in track_start_times:
             start_dt = track_start_times[short_track]
             end_dt = datetime.fromisoformat(timestamp)
             delta = end_dt - start_dt
-            duration_str = f" (impl took {format_duration(delta)})"
+            duration_str = f"took {format_duration(delta)}"
         elif activity == "merged":
             commit_info = f", {commit_count} commits" if commit_count > 0 else ""
             if short_track in track_end_times:
                 end_dt = track_end_times[short_track]
                 merge_dt = datetime.fromisoformat(timestamp)
                 delta = merge_dt - end_dt
-                duration_str = f" (merge took {format_duration(delta)}{commit_info})"
+                duration_str = f"took {format_duration(delta)}{commit_info}"
             elif short_track in track_start_times:
                 start_dt = track_start_times[short_track]
                 merge_dt = datetime.fromisoformat(timestamp)
                 delta = merge_dt - start_dt
-                duration_str = f" (took {format_duration(delta)}{commit_info})"
+                duration_str = f"took {format_duration(delta)}{commit_info}"
 
-        combined_len = len(short_track) + len(duration_str)
-        max_combined_len = max(max_combined_len, combined_len)
+        max_track_len = max(max_track_len, len(short_track))
+        max_duration_len = max(max_duration_len, len(duration_str))
 
         calculated_events.append({
             "event": event,
@@ -168,7 +169,7 @@ def run_log_mode(events):
             "duration_str": duration_str
         })
 
-    # Pass 2: Animate and print sequential log lines aligned to the dynamically calculated max combined width
+    # Pass 2: Animate and print sequential log lines aligned to the dynamically calculated column widths
     active_stack = []
     last_seen_day = None
     max_parallelism = 0
@@ -178,7 +179,10 @@ def run_log_mode(events):
         # Strip GHI number if present to save space in active list
         name_body = re.sub(r'#\d+', '', name).strip()
         words = name_body.replace('_', ' ').replace('-', ' ').split()
-        return "".join(w.capitalize() for w in words)
+        pascal = "".join(w.capitalize() for w in words)
+        if len(pascal) > 15:
+            return pascal[:15] + "..."
+        return pascal
 
     print("=" * 120)
     print(f" {'TIMESTAMP':<16} | {'ACTIVITY AND ACTIVE TRACK STACK':<65}")
@@ -234,15 +238,18 @@ def run_log_mode(events):
             act_emoji = "🔀"
             colored_act = f"\033[1;32mMERGED      \033[0m"
 
-        # Apply dark gray color to duration string
-        colored_duration = duration_str.replace("(", "\033[1;30m(").replace(")", ")\033[0m")
-
-        # Dynamic padding padding to exactly max_combined_len, then injecting color
-        padded_plain = f"{short_track}{duration_str}".ljust(max_combined_len)
+        # Apply dark gray color to duration string and bold purple to commits
         if duration_str:
-            padded_colored = padded_plain.replace(duration_str, colored_duration)
+            colored_duration = f"\033[1;30m{duration_str}\033[0m"
+            colored_duration = re.sub(r'(\b\d+\b)\s+commits', r'\033[1;35m\1\033[1;30m commits', colored_duration)
+            
+            padded_plain_duration = duration_str.ljust(max_duration_len)
+            padded_colored_duration = padded_plain_duration.replace(duration_str, colored_duration)
         else:
-            padded_colored = padded_plain
+            padded_colored_duration = " " * max_duration_len
+
+        padded_track = short_track.ljust(max_track_len)
+        track_and_duration_col = f"{padded_track} {padded_colored_duration}"
 
         # Print sequential log line
         if len(active_stack) > 0:
@@ -260,19 +267,24 @@ def run_log_mode(events):
                     colored_words.append(f"\033[1;37m{word}\033[0m")
             colored_joined_active = " ".join(colored_words)
             active_repr = f"({colored_joined_active})"
-            print(f"{display_time} {act_emoji} {colored_act:<22} {padded_colored} | {colored_count} {active_repr}")
+            print(f"{display_time} {act_emoji} {colored_act:<22} {track_and_duration_col} | {colored_count} {active_repr}")
         else:
-            print(f"{display_time} {act_emoji} {colored_act:<22} {padded_colored}")
+            print(f"{display_time} {act_emoji} {colored_act:<22} {track_and_duration_col}")
         
         time.sleep(0.15)
 
     # Force stack back to zero at the end of the simulation if anything is left
     if active_stack:
         active_stack.clear()
-        print(f"{display_time} 🔀 \033[1;32mMERGED      \033[0m ALL TRACKS COMPLETED")
+        if not is_truncated:
+            print(f"{display_time} 🔀 \033[1;32mMERGED      \033[0m ALL TRACKS COMPLETED")
+
+    if is_truncated:
+        print(f"{display_time} ⏳ \033[1;30mTRUNCATED (there are more events to be processed)\033[0m")
 
     print("\n📊 Summary Stats:")
-    print(f"   Maximum parallelism reached: \033[1;33m{max_parallelism}\033[0m tracks concurrently active (at {max_parallelism_timestamp})")
+    trunc_note = " (Note: truncated simulation)" if is_truncated else ""
+    print(f"   Maximum parallelism reached: \033[1;33m{max_parallelism}\033[0m tracks concurrently active (at {max_parallelism_timestamp}){trunc_note}")
 
 def main():
     parser = argparse.ArgumentParser(description="Animate Conductor timeline CSV")
@@ -303,13 +315,16 @@ def main():
         print("No events to animate.")
         return
 
+    is_truncated = False
     if args.max_rows is not None:
-        events = events[:args.max_rows]
+        if len(events) > args.max_rows:
+            events = events[:args.max_rows]
+            is_truncated = True
 
     if args.hud:
         run_hud_mode(events)
     else:
-        run_log_mode(events)
+        run_log_mode(events, is_truncated=is_truncated)
 
 if __name__ == "__main__":
     main()

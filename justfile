@@ -7,4 +7,4 @@ webtest:
 	npx playwright test tests/webtest.spec.js
 
 animate:
-	python3 bin/animate_conductor_csv.py conductor.csv --max-rows 50
+	python3 bin/animate_conductor_csv.py conductor.csv --max-rows 250
