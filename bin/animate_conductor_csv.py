@@ -86,6 +86,27 @@ def run_hud_mode(events):
 def run_log_mode(events):
     import re
     active_stack = [] # holds active tracks in order of birth
+    track_start_times = {} # maps short_track -> start datetime
+
+    def format_duration(delta):
+        total_seconds = int(delta.total_seconds())
+        if total_seconds < 0:
+            return "0s"
+        
+        days = total_seconds // 86400
+        hours = (total_seconds % 86400) // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+
+        if days > 0:
+            return f"{days}d {hours}h{minutes}m"
+        if hours > 0:
+            return f"{hours}h{minutes}m"
+        if minutes > 0:
+            if minutes < 5:
+                return f"{minutes}m{seconds}s"
+            return f"{minutes}m"
+        return f"{seconds}s"
 
     print("=" * 120)
     print(f" {'TIMESTAMP':<16} | {'ACTIVITY AND ACTIVE TRACK STACK':<65}")
@@ -108,6 +129,8 @@ def run_log_mode(events):
         if activity == "impl_started":
             if short_track not in active_stack:
                 active_stack.append(short_track)
+            if short_track not in track_start_times:
+                track_start_times[short_track] = datetime.fromisoformat(timestamp)
         elif activity == "merged":
             if short_track in active_stack:
                 active_stack.remove(short_track)
@@ -128,14 +151,22 @@ def run_log_mode(events):
             act_emoji = "🔀"
             colored_act = f"\033[1;32mMERGED      \033[0m"
 
+        # Calculate duration if merging
+        duration_str = ""
+        if activity == "merged" and short_track in track_start_times:
+            start_dt = track_start_times[short_track]
+            end_dt = datetime.fromisoformat(timestamp)
+            delta = end_dt - start_dt
+            duration_str = f" \033[1;30m(took {format_duration(delta)})\033[0m"
+
         # Print sequential log line
         if len(active_stack) > 0:
             colored_count = f"\033[1;33m{len(active_stack)}\033[0m"
             active_list_str = ", ".join(f"\033[1;37m{t}\033[0m" for t in active_stack)
             active_repr = f"({active_list_str})"
-            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40} | {colored_count} {active_repr}")
+            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40}{duration_str} | {colored_count} {active_repr}")
         else:
-            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40}")
+            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40}{duration_str}")
         
         time.sleep(0.15)
 
