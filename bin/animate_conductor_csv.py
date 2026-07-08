@@ -128,19 +128,21 @@ def run_log_mode(events):
             act_emoji = "🔀"
             colored_act = f"\033[1;32mMERGED      \033[0m"
 
-        # Format active stack in white
-        active_list_str = ", ".join(f"\033[1;37m{t}\033[0m" for t in active_stack)
-        active_repr = f"({active_list_str})"
-
         # Print sequential log line
-        print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40} | {len(active_stack)} active {active_repr}")
+        if len(active_stack) > 0:
+            colored_count = f"\033[1;33m{len(active_stack)}\033[0m"
+            active_list_str = ", ".join(f"\033[1;37m{t}\033[0m" for t in active_stack)
+            active_repr = f"({active_list_str})"
+            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40} | {colored_count} {active_repr}")
+        else:
+            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40}")
         
         time.sleep(0.15)
 
     # Force stack back to zero at the end of the simulation if anything is left
     if active_stack:
         active_stack.clear()
-        print(f"{display_time} 🔀 \033[1;32mMERGED      \033[0m ALL TRACKS COMPLETED                    | 0 active ()")
+        print(f"{display_time} 🔀 \033[1;32mMERGED      \033[0m ALL TRACKS COMPLETED")
 
 def main():
     parser = argparse.ArgumentParser(description="Animate Conductor timeline CSV")
