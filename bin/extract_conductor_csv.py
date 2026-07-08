@@ -100,8 +100,11 @@ def main():
                 display_name = t
                 ghi = "N/A"
                 if t in metadata:
-                    display_name = metadata[t].get("title", t)
-                    ghi = metadata[t].get("github_issue_number") or metadata[t].get("issue_number") or "N/A"
+                    gh_issue = metadata[t].get("github_issue")
+                    if isinstance(gh_issue, dict):
+                        ghi = gh_issue.get("number") or "N/A"
+                    else:
+                        ghi = metadata[t].get("github_issue_number") or metadata[t].get("issue_number") or "N/A"
                 
                 tracks_info[t] = {
                     "id": t,

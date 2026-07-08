@@ -85,28 +85,12 @@ def run_hud_mode(events):
 
 def run_log_mode(events):
     import re
-    active_stack = [] # holds active tracks in order of birth
-    track_start_times = {} # maps short_track -> start datetime
-    track_end_times = {} # maps short_track -> end datetime
-    last_seen_day = None
-    max_parallelism = 0
-    max_parallelism_timestamp = None
     
-    # Calculate the maximum length of track names dynamically to minimize whitespace padding
-    max_track_len = max(len(re.sub(r'_\d{8}$', '', event["track"])) for event in events)
-
-    def to_pascal_case(name):
-        parts = name.split()
-        if len(parts) > 1 and parts[0].startswith('#'):
-            prefix = parts[0] + " "
-            name_body = " ".join(parts[1:])
-        else:
-            prefix = ""
-            name_body = name
-        words = name_body.replace('_', ' ').replace('-', ' ').split()
-        pascal_body = "".join(w.capitalize() for w in words)
-        return prefix + pascal_body
-
+    # Pass 1: Run simulation to calculate durations and discover maximum track + duration combined width
+    active_stack_sim = []
+    track_start_times = {}
+    track_end_times = {}
+    
     def format_duration(delta):
         total_seconds = int(delta.total_seconds())
         if total_seconds < 0:
@@ -127,15 +111,86 @@ def run_log_mode(events):
             return f"{minutes}m"
         return f"{seconds}s"
 
-    print("=" * 120)
-    print(f" {'TIMESTAMP':<16} | {'ACTIVITY AND ACTIVE TRACK STACK':<65}")
-    print("=" * 120)
+    max_combined_len = 0
+    calculated_events = []
 
     for event in events:
         track = event["track"]
         activity = event["activity"]
         timestamp = event["timestamp"]
         commit_count = event.get("commit_count", 0)
+
+        # Shorten track name
+        short_track = re.sub(r'_\d{8}$', '', track)
+        match = re.match(r'^(#\d+)\s+(.+)$', short_track)
+        if match:
+            short_track = f"{match.group(2)} {match.group(1)}"
+
+        # Update simulated stacks
+        if activity == "impl_started":
+            if short_track not in active_stack_sim:
+                active_stack_sim.append(short_track)
+            if short_track not in track_start_times:
+                track_start_times[short_track] = datetime.fromisoformat(timestamp)
+        elif activity == "impl_ended":
+            if short_track not in track_end_times:
+                track_end_times[short_track] = datetime.fromisoformat(timestamp)
+        elif activity == "merged":
+            if short_track in active_stack_sim:
+                active_stack_sim.remove(short_track)
+
+        # Calculate duration string (clean, no ANSI escape codes yet for length check)
+        duration_str = ""
+        if activity == "impl_ended" and short_track in track_start_times:
+            start_dt = track_start_times[short_track]
+            end_dt = datetime.fromisoformat(timestamp)
+            delta = end_dt - start_dt
+            duration_str = f" (impl took {format_duration(delta)})"
+        elif activity == "merged":
+            commit_info = f", {commit_count} commits" if commit_count > 0 else ""
+            if short_track in track_end_times:
+                end_dt = track_end_times[short_track]
+                merge_dt = datetime.fromisoformat(timestamp)
+                delta = merge_dt - end_dt
+                duration_str = f" (merge took {format_duration(delta)}{commit_info})"
+            elif short_track in track_start_times:
+                start_dt = track_start_times[short_track]
+                merge_dt = datetime.fromisoformat(timestamp)
+                delta = merge_dt - start_dt
+                duration_str = f" (took {format_duration(delta)}{commit_info})"
+
+        combined_len = len(short_track) + len(duration_str)
+        max_combined_len = max(max_combined_len, combined_len)
+
+        calculated_events.append({
+            "event": event,
+            "short_track": short_track,
+            "duration_str": duration_str
+        })
+
+    # Pass 2: Animate and print sequential log lines aligned to the dynamically calculated max combined width
+    active_stack = []
+    last_seen_day = None
+    max_parallelism = 0
+    max_parallelism_timestamp = None
+
+    def to_pascal_case(name):
+        # Strip GHI number if present to save space in active list
+        name_body = re.sub(r'#\d+', '', name).strip()
+        words = name_body.replace('_', ' ').replace('-', ' ').split()
+        return "".join(w.capitalize() for w in words)
+
+    print("=" * 120)
+    print(f" {'TIMESTAMP':<16} | {'ACTIVITY AND ACTIVE TRACK STACK':<65}")
+    print("=" * 120)
+
+    for ce in calculated_events:
+        event = ce["event"]
+        short_track = ce["short_track"]
+        duration_str = ce["duration_str"]
+        
+        activity = event["activity"]
+        timestamp = event["timestamp"]
 
         # Parse date and time
         dt_str = timestamp.split('T')[0]
@@ -149,18 +204,10 @@ def run_log_mode(events):
             colored_day = dt_str
         display_time = f"{colored_day} {time_str}"
 
-        # Shorten track name: remove _YYYYMMDD suffix
-        short_track = re.sub(r'_\d{8}$', '', track)
-
-        # Update stack: push on start, pop/remove on merge
+        # Update active stack for this pass
         if activity == "impl_started":
             if short_track not in active_stack:
                 active_stack.append(short_track)
-            if short_track not in track_start_times:
-                track_start_times[short_track] = datetime.fromisoformat(timestamp)
-        elif activity == "impl_ended":
-            if short_track not in track_end_times:
-                track_end_times[short_track] = datetime.fromisoformat(timestamp)
         elif activity == "merged":
             if short_track in active_stack:
                 active_stack.remove(short_track)
@@ -187,30 +234,19 @@ def run_log_mode(events):
             act_emoji = "🔀"
             colored_act = f"\033[1;32mMERGED      \033[0m"
 
-        # Calculate duration
-        duration_str = ""
-        if activity == "impl_ended" and short_track in track_start_times:
-            start_dt = track_start_times[short_track]
-            end_dt = datetime.fromisoformat(timestamp)
-            delta = end_dt - start_dt
-            duration_str = f" \033[1;30m(impl took {format_duration(delta)})\033[0m"
-        elif activity == "merged":
-            commit_info = f", {commit_count} commits" if commit_count > 0 else ""
-            if short_track in track_end_times:
-                end_dt = track_end_times[short_track]
-                merge_dt = datetime.fromisoformat(timestamp)
-                delta = merge_dt - end_dt
-                duration_str = f" \033[1;30m(merge took {format_duration(delta)}{commit_info})\033[0m"
-            elif short_track in track_start_times:
-                start_dt = track_start_times[short_track]
-                merge_dt = datetime.fromisoformat(timestamp)
-                delta = merge_dt - start_dt
-                duration_str = f" \033[1;30m(took {format_duration(delta)})\033[0m"
+        # Apply dark gray color to duration string
+        colored_duration = duration_str.replace("(", "\033[1;30m(").replace(")", ")\033[0m")
+
+        # Dynamic padding padding to exactly max_combined_len, then injecting color
+        padded_plain = f"{short_track}{duration_str}".ljust(max_combined_len)
+        if duration_str:
+            padded_colored = padded_plain.replace(duration_str, colored_duration)
+        else:
+            padded_colored = padded_plain
 
         # Print sequential log line
         if len(active_stack) > 0:
             colored_count = f"\033[1;33m{len(active_stack)}\033[0m"
-            # Format to PascalCase, space separated, and cap to 40 characters
             pascal_active = [to_pascal_case(t) for t in active_stack]
             joined_active = " ".join(pascal_active)
             if len(joined_active) > 40:
@@ -224,9 +260,9 @@ def run_log_mode(events):
                     colored_words.append(f"\033[1;37m{word}\033[0m")
             colored_joined_active = " ".join(colored_words)
             active_repr = f"({colored_joined_active})"
-            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<{max_track_len}}{duration_str} | {colored_count} {active_repr}")
+            print(f"{display_time} {act_emoji} {colored_act:<22} {padded_colored} | {colored_count} {active_repr}")
         else:
-            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<{max_track_len}}{duration_str}")
+            print(f"{display_time} {act_emoji} {colored_act:<22} {padded_colored}")
         
         time.sleep(0.15)
 
