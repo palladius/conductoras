@@ -146,6 +146,7 @@ def main():
     parser = argparse.ArgumentParser(description="Animate Conductor timeline CSV")
     parser.add_argument("csv_file", default="conductor.csv", nargs="?", help="Path to Conductor CSV file")
     parser.add_argument("--hud", action="store_true", help="Run in graphical HUD dashboard mode")
+    parser.add_argument("--max-rows", type=int, default=None, help="Maximum execution lines to process")
     args = parser.parse_args()
 
     if not os.path.exists(args.csv_file):
@@ -168,6 +169,9 @@ def main():
     if not events:
         print("No events to animate.")
         return
+
+    if args.max_rows is not None:
+        events = events[:args.max_rows]
 
     if args.hud:
         run_hud_mode(events)
