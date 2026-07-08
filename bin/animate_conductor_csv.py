@@ -102,7 +102,7 @@ def run_log_mode(events, is_truncated=False):
         seconds = total_seconds % 60
 
         if days > 0:
-            return f"{days}d {hours}h{minutes}m"
+            return f"{days}d{hours}h"
         if hours > 0:
             return f"{hours}h{minutes}m"
         if minutes > 0:
@@ -125,7 +125,19 @@ def run_log_mode(events, is_truncated=False):
         short_track = re.sub(r'_\d{8}$', '', track)
         match = re.match(r'^(#\d+)\s+(.+)$', short_track)
         if match:
-            short_track = f"{match.group(2)} {match.group(1)}"
+            ghi_part = match.group(1)
+            name_part = match.group(2)
+        else:
+            ghi_part = ""
+            name_part = short_track
+
+        if len(name_part) > 20:
+            name_part = name_part[:17] + "..."
+
+        if ghi_part:
+            short_track = f"{name_part} {ghi_part}"
+        else:
+            short_track = name_part
 
         # Update simulated stacks
         if activity == "impl_started":
@@ -146,19 +158,19 @@ def run_log_mode(events, is_truncated=False):
             start_dt = track_start_times[short_track]
             end_dt = datetime.fromisoformat(timestamp)
             delta = end_dt - start_dt
-            duration_str = f"took {format_duration(delta)}"
+            duration_str = format_duration(delta)
         elif activity == "merged":
-            commit_info = f", {commit_count} commits" if commit_count > 0 else ""
+            commit_info = f", {commit_count} 🛠️" if commit_count > 0 else ""
             if short_track in track_end_times:
                 end_dt = track_end_times[short_track]
                 merge_dt = datetime.fromisoformat(timestamp)
                 delta = merge_dt - end_dt
-                duration_str = f"took {format_duration(delta)}{commit_info}"
+                duration_str = f"{format_duration(delta)}{commit_info}"
             elif short_track in track_start_times:
                 start_dt = track_start_times[short_track]
                 merge_dt = datetime.fromisoformat(timestamp)
                 delta = merge_dt - start_dt
-                duration_str = f"took {format_duration(delta)}{commit_info}"
+                duration_str = f"{format_duration(delta)}{commit_info}"
 
         max_track_len = max(max_track_len, len(short_track))
         max_duration_len = max(max_duration_len, len(duration_str))
@@ -241,14 +253,18 @@ def run_log_mode(events, is_truncated=False):
         # Apply dark gray color to duration string and bold purple to commits
         if duration_str:
             colored_duration = f"\033[1;30m{duration_str}\033[0m"
-            colored_duration = re.sub(r'(\b\d+\b)\s+commits', r'\033[1;35m\1\033[1;30m commits', colored_duration)
+            colored_duration = re.sub(r'(\b\d+\b)\s+🛠️', r'\033[1;35m\1\033[1;30m 🛠️', colored_duration)
             
             padded_plain_duration = duration_str.ljust(max_duration_len)
             padded_colored_duration = padded_plain_duration.replace(duration_str, colored_duration)
         else:
             padded_colored_duration = " " * max_duration_len
 
-        padded_track = short_track.ljust(max_track_len)
+        if "#" in short_track:
+            padded_track = short_track.ljust(max_track_len)
+            padded_track = re.sub(r'(#\d+)\b', r'\033[1;37m\1\033[0m', padded_track)
+        else:
+            padded_track = short_track.ljust(max_track_len)
         track_and_duration_col = f"{padded_track} {padded_colored_duration}"
 
         # Print sequential log line
