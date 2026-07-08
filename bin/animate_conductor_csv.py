@@ -89,6 +89,23 @@ def run_log_mode(events):
     track_start_times = {} # maps short_track -> start datetime
     track_end_times = {} # maps short_track -> end datetime
     last_seen_day = None
+    max_parallelism = 0
+    max_parallelism_timestamp = None
+    
+    # Calculate the maximum length of track names dynamically to minimize whitespace padding
+    max_track_len = max(len(re.sub(r'_\d{8}$', '', event["track"])) for event in events)
+
+    def to_pascal_case(name):
+        parts = name.split()
+        if len(parts) > 1 and parts[0].startswith('#'):
+            prefix = parts[0] + " "
+            name_body = " ".join(parts[1:])
+        else:
+            prefix = ""
+            name_body = name
+        words = name_body.replace('_', ' ').replace('-', ' ').split()
+        pascal_body = "".join(w.capitalize() for w in words)
+        return prefix + pascal_body
 
     def format_duration(delta):
         total_seconds = int(delta.total_seconds())
@@ -148,6 +165,12 @@ def run_log_mode(events):
             if short_track in active_stack:
                 active_stack.remove(short_track)
 
+        # Track peak parallelism
+        current_parallelism = len(active_stack)
+        if current_parallelism > max_parallelism:
+            max_parallelism = current_parallelism
+            max_parallelism_timestamp = display_time
+
         # Format log emoji and colored state
         act_emoji = "🌿"
         colored_act = activity.upper()
@@ -187,11 +210,23 @@ def run_log_mode(events):
         # Print sequential log line
         if len(active_stack) > 0:
             colored_count = f"\033[1;33m{len(active_stack)}\033[0m"
-            active_list_str = ", ".join(f"\033[1;37m{t}\033[0m" for t in active_stack)
-            active_repr = f"({active_list_str})"
-            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40}{duration_str} | {colored_count} {active_repr}")
+            # Format to PascalCase, space separated, and cap to 40 characters
+            pascal_active = [to_pascal_case(t) for t in active_stack]
+            joined_active = " ".join(pascal_active)
+            if len(joined_active) > 40:
+                joined_active = joined_active[:37] + "..."
+            
+            colored_words = []
+            for word in joined_active.split():
+                if word == "...":
+                    colored_words.append("\033[1;30m...\033[0m")
+                else:
+                    colored_words.append(f"\033[1;37m{word}\033[0m")
+            colored_joined_active = " ".join(colored_words)
+            active_repr = f"({colored_joined_active})"
+            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<{max_track_len}}{duration_str} | {colored_count} {active_repr}")
         else:
-            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40}{duration_str}")
+            print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<{max_track_len}}{duration_str}")
         
         time.sleep(0.15)
 
@@ -199,6 +234,9 @@ def run_log_mode(events):
     if active_stack:
         active_stack.clear()
         print(f"{display_time} 🔀 \033[1;32mMERGED      \033[0m ALL TRACKS COMPLETED")
+
+    print("\n📊 Summary Stats:")
+    print(f"   Maximum parallelism reached: \033[1;33m{max_parallelism}\033[0m tracks concurrently active (at {max_parallelism_timestamp})")
 
 def main():
     parser = argparse.ArgumentParser(description="Animate Conductor timeline CSV")
