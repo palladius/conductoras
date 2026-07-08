@@ -1,0 +1,133 @@
+timestamp,track,activity,details
+2026-05-29T12:05:09+02:00,core_ics_delegation_20260529,spec_created,Created spec by Riccardo Carlesso: conductor(setup): Add conductor setup files
+2026-05-29T12:05:09+02:00,core_ics_delegation_20260529,impl_started,First implementation commit by Riccardo Carlesso: conductor(setup): Add conductor setup files
+2026-05-29T12:56:20+02:00,core_ics_delegation_20260529,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(plan): Registry updates for 100% completed core_ics_delegation_20260529 track
+2026-05-29T12:56:20+02:00,core_ics_delegation_20260529,merged,Merge fallback to latest commit: conductor(plan): Registry updates for 100% completed core_ics_delegation_20260529 track
+2026-05-29T12:56:53+02:00,mock_diagnostics_20260529,spec_created,Created spec by Riccardo Carlesso: conductor(setup): Scaffolding and registering mock_diagnostics_20260529 track
+2026-05-29T12:56:53+02:00,mock_diagnostics_20260529,impl_started,First implementation commit by Riccardo Carlesso: conductor(setup): Scaffolding and registering mock_diagnostics_20260529 track
+2026-06-01T07:56:58+02:00,mock_diagnostics_20260529,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Mark track 'mock_diagnostics_20260529' as completed
+2026-06-01T07:56:58+02:00,mock_diagnostics_20260529,merged,Merge fallback to latest commit: chore(conductor): Mark track 'mock_diagnostics_20260529' as completed
+2026-06-01T07:58:39+02:00,sre_dashboard_20260601,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Initialize track 'sre_dashboard_20260601' for SRE Web Dashboard
+2026-06-01T07:58:39+02:00,sre_dashboard_20260601,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Initialize track 'sre_dashboard_20260601' for SRE Web Dashboard
+2026-06-01T08:07:04+02:00,sre_dashboard_20260601,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Mark track 'sre_dashboard_20260601' as completed
+2026-06-01T08:07:04+02:00,sre_dashboard_20260601,merged,Merge fallback to latest commit: chore(conductor): Mark track 'sre_dashboard_20260601' as completed
+2026-06-01T16:32:42+02:00,comms_integration_20260601,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Initialize track 'comms_integration_20260601' for Madhavi integrations
+2026-06-01T16:32:42+02:00,comms_integration_20260601,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Initialize track 'comms_integration_20260601' for Madhavi integrations
+2026-06-01T16:35:11+02:00,comms_integration_20260601,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Mark track 'comms_integration_20260601' as completed
+2026-06-01T16:35:11+02:00,comms_integration_20260601,merged,Merge fallback to latest commit: chore(conductor): Mark track 'comms_integration_20260601' as completed
+2026-06-01T16:37:00+02:00,sre_skills_integration_20260601,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Initialize track 'sre_skills_integration_20260601' for SRE Extension skills integration
+2026-06-01T16:37:00+02:00,sre_skills_integration_20260601,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Initialize track 'sre_skills_integration_20260601' for SRE Extension skills integration
+2026-06-01T16:38:21+02:00,sre_skills_integration_20260601,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Mark track 'sre_skills_integration_20260601' as completed
+2026-06-01T16:38:21+02:00,sre_skills_integration_20260601,merged,Merge fallback to latest commit: chore(conductor): Mark track 'sre_skills_integration_20260601' as completed
+2026-06-01T21:04:55+02:00,live_gcp_connectors_20260601,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'live_gcp_connectors_20260601'
+2026-06-01T21:04:55+02:00,live_gcp_connectors_20260601,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'live_gcp_connectors_20260601'
+2026-06-01T21:23:12+02:00,gcp_resource_discovery_20260601,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'GCP Resource Discovery and Asset Audit'
+2026-06-01T21:23:12+02:00,gcp_resource_discovery_20260601,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'GCP Resource Discovery and Asset Audit'
+2026-06-02T08:32:44+02:00,cross_chat_mirroring_20260602,spec_created,"Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Manage SRE WebChat and Telegram Chat, enable cross-visibility mirrored conversations, fix Gemini 404 error, and upgrade clearance buttons to use the explosion emoji.'"
+2026-06-02T08:32:44+02:00,cross_chat_mirroring_20260602,impl_started,"First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Manage SRE WebChat and Telegram Chat, enable cross-visibility mirrored conversations, fix Gemini 404 error, and upgrade clearance buttons to use the explosion emoji.'"
+2026-06-02T08:37:17+02:00,cross_chat_mirroring_20260602,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(plan): mark track cross_chat_mirroring_20260602 as completed
+2026-06-02T08:37:17+02:00,cross_chat_mirroring_20260602,merged,Merge fallback to latest commit: conductor(plan): mark track cross_chat_mirroring_20260602 as completed
+2026-06-02T08:52:50+02:00,cross_chat_statefulness_20260602,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Cross-Chat Statefulness and Memory Synchronization'
+2026-06-02T08:52:50+02:00,cross_chat_statefulness_20260602,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Cross-Chat Statefulness and Memory Synchronization'
+2026-06-02T08:54:30+02:00,pending_mutations_registry_20260602,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Pending Mutation Approvals Queue'
+2026-06-02T08:54:30+02:00,pending_mutations_registry_20260602,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Pending Mutation Approvals Queue'
+2026-06-02T11:38:06+02:00,multi_view_project_explorer_20260602,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Multi-View Project Explorer'
+2026-06-02T11:38:06+02:00,multi_view_project_explorer_20260602,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Multi-View Project Explorer'
+2026-06-02T16:17:16+02:00,multi_view_project_explorer_20260602,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Mark track 'Multi-View Project Explorer' as complete
+2026-06-03T17:35:25+02:00,cross_chat_statefulness_20260602,impl_ended,Latest implementation commit by Riccardo Carlesso: docs(conductor): mark cross-chat statefulness track as completed and track active_state.json
+2026-06-03T17:47:25+02:00,telegram_incident_creation_20260603,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Interactive Telegram Incident Creation'
+2026-06-03T17:47:25+02:00,telegram_incident_creation_20260603,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Interactive Telegram Incident Creation'
+2026-06-03T17:57:26+02:00,better_copilot_sidebar_20260603,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Better Copilot Sidebar Panel'
+2026-06-03T17:57:26+02:00,better_copilot_sidebar_20260603,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Better Copilot Sidebar Panel'
+2026-06-03T18:02:25+02:00,better_copilot_sidebar_20260603,impl_ended,"Latest implementation commit by Riccardo Carlesso: feat(sidebar): rename to SRE Secondary Oncall, add resizer, autofocus, '/' shortcut, and speech-to-text API/UI"
+2026-06-03T18:02:25+02:00,better_copilot_sidebar_20260603,merged,"Merge fallback to latest commit: feat(sidebar): rename to SRE Secondary Oncall, add resizer, autofocus, '/' shortcut, and speech-to-text API/UI"
+2026-06-03T18:11:15+02:00,project_explorer_ui_improvements_20260603,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'project_explorer_ui_improvements_20260603' and sync GEMINI.md guidelines
+2026-06-03T18:11:15+02:00,project_explorer_ui_improvements_20260603,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'project_explorer_ui_improvements_20260603' and sync GEMINI.md guidelines
+2026-06-03T18:16:15+02:00,project_explorer_ui_improvements_20260603,impl_ended,"Latest implementation commit by Riccardo Carlesso: feat(explorer): improve project explorer layout, add edit toggles, pan/zoom SVG, and fix deep reload. Closes #2"
+2026-06-03T18:16:15+02:00,project_explorer_ui_improvements_20260603,merged,"Merge fallback to latest commit: feat(explorer): improve project explorer layout, add edit toggles, pan/zoom SVG, and fix deep reload. Closes #2"
+2026-06-04T09:02:38+02:00,incident_status_taxonomy_20260603,spec_created,"Created spec by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T09:02:38+02:00,incident_status_taxonomy_20260603,impl_started,"First implementation commit by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T09:02:38+02:00,incident_delete_archive_20260603,spec_created,"Created spec by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T09:02:38+02:00,incident_delete_archive_20260603,impl_started,"First implementation commit by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T09:02:38+02:00,wiki_cross_linking_20260603,spec_created,"Created spec by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T09:02:38+02:00,wiki_cross_linking_20260603,impl_started,"First implementation commit by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T09:02:38+02:00,adk_observability_cloud_run_20260603,spec_created,"Created spec by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T09:02:38+02:00,adk_observability_cloud_run_20260603,impl_started,"First implementation commit by Riccardo Carlesso: chore(conductor): initialize tracks for open issues 1, 5, 6, 7"
+2026-06-04T10:12:03+02:00,ui_navigation_deep_reload_20260604,spec_created,Created spec by Riccardo Carlesso:  minor changes
+2026-06-04T10:12:03+02:00,ui_navigation_deep_reload_20260604,impl_started,First implementation commit by Riccardo Carlesso:  minor changes
+2026-06-04T10:12:03+02:00,ui_navigation_deep_reload_20260604,impl_ended,Latest implementation commit by Riccardo Carlesso:  minor changes
+2026-06-04T10:12:03+02:00,ui_navigation_deep_reload_20260604,merged,Merge fallback to latest commit:  minor changes
+2026-06-04T12:27:14+02:00,better_wiki_edit_ui_20260604,spec_created,"Created spec by Riccardo Carlesso: feat(cloud-run): Secure Cloud Run with IAP, enable OTEL tracing, and onboard new tracks 🚀🛡️📈"
+2026-06-04T12:27:14+02:00,better_wiki_edit_ui_20260604,impl_started,"First implementation commit by Riccardo Carlesso: feat(cloud-run): Secure Cloud Run with IAP, enable OTEL tracing, and onboard new tracks 🚀🛡️📈"
+2026-06-04T12:27:14+02:00,graduate_local_state_cloud_20260604,spec_created,"Created spec by Riccardo Carlesso: feat(cloud-run): Secure Cloud Run with IAP, enable OTEL tracing, and onboard new tracks 🚀🛡️📈"
+2026-06-04T12:27:14+02:00,graduate_local_state_cloud_20260604,impl_started,"First implementation commit by Riccardo Carlesso: feat(cloud-run): Secure Cloud Run with IAP, enable OTEL tracing, and onboard new tracks 🚀🛡️📈"
+2026-06-04T17:50:05+02:00,sre_demo_domain_20260604,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Create a SRE Demo domain under discover/domains/sre-demo/ and add a main file (README.md / index.md)'
+2026-06-04T17:50:05+02:00,sre_demo_domain_20260604,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Create a SRE Demo domain under discover/domains/sre-demo/ and add a main file (README.md / index.md)'
+2026-06-04T17:50:05+02:00,sre_demo_domain_20260604,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Create a SRE Demo domain under discover/domains/sre-demo/ and add a main file (README.md / index.md)'
+2026-06-04T17:58:11+02:00,sre_demo_domain_20260604,merged,Merge fallback to latest commit: chore(conductor): Update metadata status to completed for SRE Demo track
+2026-06-05T09:53:31+02:00,sre_extension_prompts_20260605,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Use SRE Extension skills to power up the agents'
+2026-06-05T09:53:31+02:00,sre_extension_prompts_20260605,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Use SRE Extension skills to power up the agents'
+2026-06-05T09:56:06+02:00,sre_extension_prompts_20260605,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(plan): Mark track 'Use SRE Extension skills to power up the agents' as complete
+2026-06-05T09:56:06+02:00,sre_extension_prompts_20260605,merged,Merge fallback to latest commit: conductor(plan): Mark track 'Use SRE Extension skills to power up the agents' as complete
+2026-06-08T09:10:58+02:00,unified_incident_lifecycle_observability_20260607,spec_created,Created spec by Riccardo Carlesso: scribe(audit): Diagnostics and safety gate pause for INC-20260608-bca0
+2026-06-08T09:10:58+02:00,unified_incident_lifecycle_observability_20260607,impl_started,First implementation commit by Riccardo Carlesso: scribe(audit): Diagnostics and safety gate pause for INC-20260608-bca0
+2026-06-16T10:30:10+02:00,incident_delete_archive_20260603,impl_ended,Latest implementation commit by Riccardo Carlesso: 1.2.8 added GHI to conductor
+2026-06-16T10:30:10+02:00,wiki_cross_linking_20260603,impl_ended,Latest implementation commit by Riccardo Carlesso: 1.2.8 added GHI to conductor
+2026-06-16T10:30:10+02:00,adk_observability_cloud_run_20260603,impl_ended,Latest implementation commit by Riccardo Carlesso: 1.2.8 added GHI to conductor
+2026-06-16T10:30:10+02:00,better_wiki_edit_ui_20260604,impl_ended,Latest implementation commit by Riccardo Carlesso: 1.2.8 added GHI to conductor
+2026-06-16T10:30:10+02:00,graduate_local_state_cloud_20260604,impl_ended,Latest implementation commit by Riccardo Carlesso: 1.2.8 added GHI to conductor
+2026-06-16T12:02:12+02:00,better_wiki_edit_ui_20260604,merged,Merge fallback to latest commit: conductor(plan): mark track 'better_wiki_edit_ui_20260604' as complete
+2026-06-16T12:15:26+02:00,wiki_cross_linking_20260603,merged,Merge fallback to latest commit: conductor(plan): mark track 'wiki_cross_linking_20260603' as complete
+2026-06-16T12:15:40+02:00,incident_delete_archive_20260603,merged,Merge fallback to latest commit: docs: update plan.md and metadata.json to reflect track completion
+2026-06-16T12:26:26+02:00,remove_test_project_123_20260616,spec_created,Created spec by Riccardo Carlesso: conductor(plan): Mark track 'Remove test-project-123 and disable MOCKING' as completed
+2026-06-16T12:26:26+02:00,remove_test_project_123_20260616,impl_started,First implementation commit by Riccardo Carlesso: conductor(plan): Mark track 'Remove test-project-123 and disable MOCKING' as completed
+2026-06-16T12:26:26+02:00,remove_test_project_123_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(plan): Mark track 'Remove test-project-123 and disable MOCKING' as completed
+2026-06-16T12:32:12+02:00,multi_view_project_explorer_20260602,merged,Merge fallback to latest commit: chore: Correct track status of multi_view_project_explorer_20260602 to completed
+2026-06-16T12:32:16+02:00,cross_chat_statefulness_20260602,merged,Merge fallback to latest commit: chore: Correct track status of cross_chat_statefulness_20260602 to completed
+2026-06-16T12:43:26+02:00,pending_mutations_registry_20260602,impl_ended,Latest implementation commit by Riccardo Carlesso: feat(mutation-queue): Implement Pending Mutations Registry (Phase 1) (#28)
+2026-06-16T12:43:28+02:00,telegram_incident_creation_20260603,impl_ended,Latest implementation commit by Riccardo Carlesso: feat(telegram): Implement interactive incident creation and Gemini intent parser
+2026-06-16T12:43:28+02:00,telegram_incident_creation_20260603,merged,Merge fallback to latest commit: feat(telegram): Implement interactive incident creation and Gemini intent parser
+2026-06-16T12:46:29+02:00,live_gcp_connectors_20260601,impl_ended,Latest implementation commit by Riccardo Carlesso: feat(sre): implement whitelisted mutations via compute ssh and manual override buttons
+2026-06-16T12:46:29+02:00,live_gcp_connectors_20260601,merged,Merge fallback to latest commit: feat(sre): implement whitelisted mutations via compute ssh and manual override buttons
+2026-06-16T12:50:36+02:00,multi_env_state_management_20260616,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Make sense of state in multiple environments (local vs cloud)'
+2026-06-16T12:50:36+02:00,multi_env_state_management_20260616,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Make sense of state in multiple environments (local vs cloud)'
+2026-06-16T12:50:36+02:00,multi_env_state_management_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Make sense of state in multiple environments (local vs cloud)'
+2026-06-16T13:19:18+02:00,remove_test_project_123_20260616,merged,Merge fallback to latest commit: 🤖 chore: explicitly assign antigravity agent to tracks in metadata -- made with Antigravity
+2026-06-16T14:50:42+02:00,unified_incident_lifecycle_observability_20260607,impl_ended,Latest implementation commit by Riccardo Carlesso: Implement Phase 2 Multi-Agent Unified Logging
+2026-06-16T15:05:46+02:00,gcp_resource_discovery_20260601,impl_ended,Latest implementation commit by Riccardo Carlesso: docs(conductor): Update master tracks.md and taxonomy metadata to completed 🏰📝🎯 -- from Antigravity on behalf of Riccardo
+2026-06-16T15:05:46+02:00,gcp_resource_discovery_20260601,merged,Merge fallback to latest commit: docs(conductor): Update master tracks.md and taxonomy metadata to completed 🏰📝🎯 -- from Antigravity on behalf of Riccardo
+2026-06-16T15:05:46+02:00,incident_status_taxonomy_20260603,impl_ended,Latest implementation commit by Riccardo Carlesso: docs(conductor): Update master tracks.md and taxonomy metadata to completed 🏰📝🎯 -- from Antigravity on behalf of Riccardo
+2026-06-16T15:05:46+02:00,incident_status_taxonomy_20260603,merged,Merge fallback to latest commit: docs(conductor): Update master tracks.md and taxonomy metadata to completed 🏰📝🎯 -- from Antigravity on behalf of Riccardo
+2026-06-16T15:07:23+02:00,graduate_local_state_cloud_20260604,merged,Merge fallback to latest commit: chore(conductor): mark track graduate_local_state_cloud_20260604 as completed 🏁📝
+2026-06-16T15:47:32+02:00,multi_env_state_management_20260616,merged,Merge fallback to latest commit: conductor(plan): Mark Phase 1 & 2 as complete for track multi_env_state_management_20260616
+2026-06-16T15:48:35+02:00,adk_observability_cloud_run_20260603,merged,Merge fallback to latest commit: docs(conductor): mark track adk_observability_cloud_run_20260603 as completed
+2026-06-16T15:55:17+02:00,pending_mutations_registry_20260602,merged,Merge fallback to latest commit: docs(conductor): mark track pending_mutations_registry_20260602 as completed
+2026-06-16T16:18:46+02:00,mcp_streamline_abilities_20260616,spec_created,Created spec by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,mcp_streamline_abilities_20260616,impl_started,First implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,mcp_streamline_abilities_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,managed_agents_sandbox_20260616,spec_created,Created spec by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,managed_agents_sandbox_20260616,impl_started,First implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,managed_agents_sandbox_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,migrate_tf_cb_logic_20260616,spec_created,Created spec by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,migrate_tf_cb_logic_20260616,impl_started,First implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,migrate_tf_cb_logic_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,fuse_mount_gcs_discovery_20260616,spec_created,Created spec by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,fuse_mount_gcs_discovery_20260616,impl_started,First implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,workspace_agent_installation_20260616,spec_created,Created spec by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,workspace_agent_installation_20260616,impl_started,First implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,workspace_agent_installation_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,ai_engineering_practices_20260616,spec_created,Created spec by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,ai_engineering_practices_20260616,impl_started,First implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:18:46+02:00,ai_engineering_practices_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(tracks): track all backlog issues in Conductor 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:19:34+02:00,workspace_agent_installation_20260616,merged,Merge fallback to latest commit: conductor(tracks): mark new tracks as NOT_READY ⛔ -- from agy CLI on behalf of Riccardo
+2026-06-16T16:20:54+02:00,fuse_mount_gcs_discovery_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: conductor(tracks): resolve GCS FUSE track as COMPLETED since rsync sync is implemented 🏁 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:20:54+02:00,fuse_mount_gcs_discovery_20260616,merged,Merge fallback to latest commit: conductor(tracks): resolve GCS FUSE track as COMPLETED since rsync sync is implemented 🏁 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:41:47+02:00,unified_incident_lifecycle_observability_20260607,merged,Merge fallback to latest commit: conductor(plan): format plans with required phase verification tasks 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:41:47+02:00,mcp_streamline_abilities_20260616,merged,Merge fallback to latest commit: conductor(plan): format plans with required phase verification tasks 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:41:47+02:00,migrate_tf_cb_logic_20260616,merged,Merge fallback to latest commit: conductor(plan): format plans with required phase verification tasks 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:41:47+02:00,ai_engineering_practices_20260616,merged,Merge fallback to latest commit: conductor(plan): format plans with required phase verification tasks 🚂 -- from agy CLI on behalf of Riccardo
+2026-06-16T16:55:03+02:00,disable_mock_fallback_dev_20260616,spec_created,Created spec by Riccardo Carlesso: chore(conductor): Add new track 'Disable silent mock fallback in development mode' (Issue #31)
+2026-06-16T16:55:03+02:00,disable_mock_fallback_dev_20260616,impl_started,First implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Disable silent mock fallback in development mode' (Issue #31)
+2026-06-16T16:55:03+02:00,disable_mock_fallback_dev_20260616,impl_ended,Latest implementation commit by Riccardo Carlesso: chore(conductor): Add new track 'Disable silent mock fallback in development mode' (Issue #31)
+2026-06-16T16:55:58+02:00,disable_mock_fallback_dev_20260616,merged,Merge fallback to latest commit: chore(conductor): Update metadata with worktree and GitHub Issue for track disable_mock_fallback_dev_20260616 (Issue #31)
+2026-06-16T17:40:10+02:00,managed_agents_sandbox_20260616,merged,Merge fallback to latest commit: chore(conductor): Add new track 'Use Managed Agents API to create a solid SRE agent sandbox'
