@@ -84,30 +84,33 @@ def run_hud_mode(events):
         time.sleep(0.4)
 
 def run_log_mode(events):
+    import re
     active_stack = [] # holds active tracks in order of birth
 
     print("=" * 120)
-    print(f" {'TIMESTAMP':<16} | {'ACTIVE TRACKS (ORDER OF BIRTH)':<65} | ACTIVITY DETAIL")
+    print(f" {'TIMESTAMP':<16} | {'ACTIVITY AND ACTIVE TRACK STACK':<65}")
     print("=" * 120)
 
     for event in events:
         track = event["track"]
         activity = event["activity"]
         timestamp = event["timestamp"]
-        details = event["details"]
 
         # Parse date and time
         dt_str = timestamp.split('T')[0]
         time_str = timestamp.split('T')[1].split('+')[0][:5]
         display_time = f"{dt_str} {time_str}"
 
+        # Shorten track name: remove _YYYYMMDD suffix
+        short_track = re.sub(r'_\d{8}$', '', track)
+
         # Update stack: push on start, pop/remove on merge
         if activity == "impl_started":
-            if track not in active_stack:
-                active_stack.append(track)
+            if short_track not in active_stack:
+                active_stack.append(short_track)
         elif activity == "merged":
-            if track in active_stack:
-                active_stack.remove(track)
+            if short_track in active_stack:
+                active_stack.remove(short_track)
 
         # Format log emoji and colored state
         act_emoji = "🌿"
@@ -125,28 +128,19 @@ def run_log_mode(events):
             act_emoji = "🔀"
             colored_act = f"\033[1;32mMERGED      \033[0m"
 
-        # Format stack printout
-        stack_str = ", ".join(f"\033[1;32m{t}\033[0m" for t in active_stack)
-        stack_repr = f"[{stack_str}]"
+        # Format active stack in white
+        active_list_str = ", ".join(f"\033[1;37m{t}\033[0m" for t in active_stack)
+        active_repr = f"({active_list_str})"
 
         # Print sequential log line
-        # Use simple pad spacing so ANSI escapes don't mess up standard padding
-        clean_stack = ", ".join(active_stack)
-        clean_stack_repr = f"[{clean_stack}]"
-        # We manually space pad the stack representation to be visual
-        padded_stack = clean_stack_repr.ljust(80)
-        # Substitute clean track names in the padded space with their colored ones
-        for t in active_stack:
-            padded_stack = padded_stack.replace(t, f"\033[1;32m{t}\033[0m")
-
-        print(f"[{display_time}] (Active: {padded_stack}) {act_emoji} {colored_act:<22}: {track:<30} | {details[:60]}")
+        print(f"{display_time} {act_emoji} {colored_act:<22} {short_track:<40} | {len(active_stack)} active {active_repr}")
         
         time.sleep(0.15)
 
     # Force stack back to zero at the end of the simulation if anything is left
     if active_stack:
         active_stack.clear()
-        print(f"[{display_time}] (Active: [\033[1;32m\033[0m]                                                                                ) 🔀 \033[1;32mMERGED      \033[0m: ALL TRACKS COMPLETED           | Cleanup sequence complete. Active stack returned to 0.")
+        print(f"{display_time} 🔀 \033[1;32mMERGED      \033[0m ALL TRACKS COMPLETED                    | 0 active ()")
 
 def main():
     parser = argparse.ArgumentParser(description="Animate Conductor timeline CSV")
